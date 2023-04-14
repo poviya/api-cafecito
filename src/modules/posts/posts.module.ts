@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PostAdCategoryModule } from './post-ad-category/post-ad-category.module';
 import { PostBookmarkModule } from './post-bookmark/post-bookmak.module';
 import { PostMediaModule } from './post-media/post-media.module';
+import { PostCategoryModule } from './post-category/post-category.module';
 
 @Module({
-  imports: [PostAdCategoryModule, PostBookmarkModule, PostMediaModule],
-  exports: [PostAdCategoryModule, PostBookmarkModule, PostMediaModule],
+  imports: [PostBookmarkModule, PostMediaModule, PostCategoryModule],
+  exports: [PostBookmarkModule, PostMediaModule, PostCategoryModule],
 })
 export class PostsModule {}
