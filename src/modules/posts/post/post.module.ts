@@ -5,10 +5,10 @@ import { PostMediaModule } from '../post-media/post-media.module';
 import { PostMediaService } from '../post-media/post-media.service';
 import { UserModule } from 'src/modules/users/user/user.module';
 import { PostService } from './post.service';
-import { PostOnlypuController } from './post.controller';
+import { PostController } from './post.controller';
 
 @Module({
-  controllers: [PostOnlypuController],
+  controllers: [PostController],
   providers: [PostMediaService, PostService],
   imports: [
     MongooseModule.forFeature([{ name: Posts.name, schema: PostSchema }]),

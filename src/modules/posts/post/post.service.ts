@@ -19,6 +19,7 @@ import {
   FindAllUserMediaDto,
 } from './dto/post.dto';
 import { Posts } from './entities/post.entity';
+import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
 
 @Injectable()
 export class PostService {
@@ -35,31 +36,31 @@ export class PostService {
     private readonly amazonStorageService: AmazonStorageService,
   ) {}
 
-  async create(dataDto: any, files): Promise<any> {
+  async create(dataDto: any, files, user: AuthUserDto): Promise<any> {
     let resUpdate;
     try {
       console.log(dataDto);
-      const code = this.generateRandomString(10) + Date.now();
-      const slug = (await this.convertToSlug(dataDto.description)) + code;
-      dataDto.type = 'POST';
+      const code = 'CO' + this.generateRandomString(10) + Date.now();
+      const slug = (await this.convertToSlug(dataDto.title)) + code;
       const createPost = {
-        title: dataDto.description.slice(0, 40),
+        title: dataDto.title,
         code: code,
         slug: slug,
-        User: dataDto.User,
+        User: user._id,
         description: dataDto.description,
-        typeView: dataDto.typeView,
+        PostSalesUnit: dataDto.PostSalesUnit,
+        PostCategory: dataDto.PostCategory,
         price: dataDto.price,
         Money: dataDto.Money,
         tags: splitHastag(dataDto.description),
-        type: 'POST',
+        type: 'ARTICLE',
         comment: dataDto.comment,
       };
       const res = await this.postModel.create(createPost);
       const createPostMedia: any = {
-        User: dataDto.User,
+        User: user._id,
         Post: res._id,
-        category: 'POST',
+        category: 'ARTICLE',
       };
       //await this.amazonStorageService.uploadFileBase64(dataDto.imageBase64);
       for (const file of files) {
@@ -120,18 +121,11 @@ export class PostService {
   }
 
   async update(ID: string, dataDTO: any): Promise<any> {
-    const data = await this.findOne(ID);
+    await this.findOne(ID);
 
     try {
-      await data.updateOne(dataDTO);
-      return {
-        ok: true,
-        data: {
-          ...data.toJSON(),
-          ...dataDTO,
-        },
-        message: 'Se actualizo correctamente',
-      };
+      const res = await this.postModel.findOneAndUpdate(dataDTO);
+      return res;
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -142,7 +136,7 @@ export class PostService {
 
     if (isValidObjectId(ID)) {
       res = await this.postModel
-        .findOne({ _id: ID, type: 'POST' })
+        .findOne({ _id: ID, type: 'ARTICLE' })
         .populate('PostMedia')
         .populate('User');
     }
@@ -172,12 +166,73 @@ export class PostService {
     return;
   }
 
+  async findAll(dataDto: any, paginationDto): Promise<any> {
+    const { limit = 10, offset = 0 } = paginationDto;
+    const data: any = {
+      status: { $eq: dataDto.status },
+    };
+
+    if (dataDto.search) {
+      if (dataDto.search.trim()) {
+        data.$text = { $search: new RegExp(dataDto.search) };
+        delete dataDto.search;
+      }
+    }
+
+    console.log(data);
+    const [resTotal, resPost] = await Promise.all([
+      this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
+      this.postModel
+        .find({ ...data, type: 'ARTICLE' })
+        .populate('PostMedia')
+        .populate('PostCategory')
+        .populate('PostSalesUnit')
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(offset)
+        .exec(),
+    ]);
+    return {
+      totalPages: resTotal,
+      data: resPost,
+    };
+  }
+
+  async findAllInfinite(dataDto: any, paginationDto): Promise<any> {
+    const { limit = 10, offset = 0 } = paginationDto;
+
+    const data: any = {
+      status: { $eq: dataDto.status },
+    };
+
+    if (dataDto.search) {
+      if (dataDto.search.trim()) {
+        data.$text = { $search: new RegExp(dataDto.search) };
+        delete dataDto.search;
+      }
+    }
+
+    const res = await this.postModel
+      .find({ ...data, type: 'ARTICLE' })
+      .populate('PostMedia')
+      .populate('PostCategory')
+      .populate('PostSalesUnit')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(offset)
+      .exec();
+
+    return {
+      data: res,
+    };
+  }
+
   async findAllUser(dataDto: FindAllUserDto) {
     console.log(dataDto);
     const user = await this.userService.slug(dataDto);
     if (user) {
       const list = await this.postModel
-        .find({ User: user._id, Site: { $eq: dataDto.Site }, type: 'POST' })
+        .find({ User: user._id, type: 'ARTICLE' })
         .populate('PostMedia')
         .populate([
           {
@@ -193,12 +248,29 @@ export class PostService {
     }
   }
 
+  async findAllCounter(dataDto: any): Promise<any> {
+    const [resActive, resInactive] = await Promise.all([
+      this.postModel.countDocuments({
+        status: 'ACTIVE',
+        type: 'ARTICLE',
+      }),
+      this.postModel.countDocuments({
+        status: 'SUSPENDED',
+      }),
+    ]);
+
+    const data = {
+      active: resActive,
+      inactive: resInactive,
+    };
+    return data;
+  }
+
   async findAllUserMedia(dataDto: FindAllUserMediaDto) {
     const list = await this.postMediaModel
       .find({
         User: dataDto.User,
-        //Site: { $eq: dataDto.Site },
-        category: 'POST',
+        category: 'ARTICLE',
         type: dataDto.type,
       })
       .populate('Post')
@@ -215,7 +287,7 @@ export class PostService {
 
   async findAllPosts(dataDto: FindAllPostDto) {
     const list = await this.postModel
-      .find({ Site: { $eq: dataDto.Site }, type: 'POST' })
+      .find({ Site: { $eq: dataDto.Site }, type: 'ARTICLE' })
       .populate('PostMedia')
       .populate([
         {
@@ -228,19 +300,9 @@ export class PostService {
     return list;
   }
 
-  async findAll(dataDto: any): Promise<Posts[]> {
-    const list = await this.postModel
-      .find({ Site: { $eq: dataDto.Site } })
-      .populate('PostMedia')
-      .populate('User')
-      .sort({ createdAt: -1 })
-      .exec();
-    return list;
-  }
-
   async findSearch(dataDto: any): Promise<Posts[]> {
     const list = await this.postModel
-      .find({ $text: { $search: dataDto.q }, type: 'POST' })
+      .find({ $text: { $search: dataDto.q }, type: 'ARTICLE' })
       .populate('PostMedia')
       .populate('User')
       .sort({ createdAt: -1 })

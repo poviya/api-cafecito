@@ -9,6 +9,7 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ParseMongoIdPipe } from 'src/common/pipe/parse-mongo-id/parse-mongo-id.pipe';
@@ -23,9 +24,11 @@ import {
   UpdatePostDto,
 } from './dto/post.dto';
 import { PostService } from './post.service';
+import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
 
-@Controller('post-onlypu')
-export class PostOnlypuController {
+@Controller('post')
+export class PostController {
+  postAdService: any;
   constructor(private readonly postService: PostService) {}
 
   @UseGuards(JwtAuthGuard)
@@ -38,7 +41,7 @@ export class PostOnlypuController {
   async create(
     @Body() dataDTO: any,
     @UploadedFiles() files: Array<Express.Multer.File>,
-    //@CurrentUser() user: any,
+    @CurrentUser() user: any,
   ) {
     if (!files) {
       throw new BadRequestException('Make sure that the file is an image');
@@ -46,7 +49,7 @@ export class PostOnlypuController {
     const createDto = JSON.parse(dataDTO.data);
     //createDto.User = await user;
     //this.adImageService.uploadFileMultiple(files);
-    const res = this.postService.create(createDto, files);
+    const res = this.postService.create(createDto, files, user);
     // console.log(dataDTO);
     //console.log(files);
     return res;
@@ -86,12 +89,6 @@ export class PostOnlypuController {
     return res;
   }
 
-  @Post('/all')
-  async findAllCountry(@Body() datadto: any) {
-    const res = await this.postService.findAll(datadto);
-    return res;
-  }
-
   //hastags
   @Post('analyze-hastags')
   analyzeHastag(@Body() dataDto: AnalyzeHastagsDto) {
@@ -102,6 +99,39 @@ export class PostOnlypuController {
   @Post('search')
   findSearch(@Body() dataDto: any) {
     const res = this.postService.findSearch(dataDto);
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/find-all')
+  async findAll(
+    @Query() paginationDto: any,
+    @Body() createDto: any,
+    @CurrentUser() user: AuthUserDto,
+  ): Promise<any> {
+    const res = await this.postService.findAll(createDto, paginationDto);
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/find-all-infinite')
+  async findAllInfinite(
+    @Query() paginationDto: any,
+    @Body() createDto: any,
+    @CurrentUser() user: any,
+  ) {
+    const res = await this.postService.findAllInfinite(
+      createDto,
+      paginationDto,
+    );
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/find-all-count')
+  async findAllCount(@Body() createDto: any, @CurrentUser() user: any) {
+    createDto.User = await user;
+    const res = await this.postService.findAllCounter(createDto);
     return res;
   }
 }

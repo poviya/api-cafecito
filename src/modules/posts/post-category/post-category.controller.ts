@@ -6,12 +6,11 @@ import {
   Patch,
   Param,
   Delete,
-  Put,
 } from '@nestjs/common';
 import { PostCategoryService } from './post-category.service';
-import { CreatePostCategoryDto } from './dto/create-post-category.dto';
-import { UpdatePostCategoryDto } from './dto/update-post-category.dto';
+import { CreatePostCategoryDto, UpdatePostCategoryDto } from './dto';
 import { PostCategory } from './entities/post-category.entity';
+import { ParseMongoIdPipe } from 'src/common/pipe/parse-mongo-id/parse-mongo-id.pipe';
 
 @Controller('post-category')
 export class PostCategoryController {
@@ -23,6 +22,15 @@ export class PostCategoryController {
     return res;
   }
 
+  @Patch(':id')
+  async update(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @Body() datosDto: UpdatePostCategoryDto,
+  ) {
+    const res = await this.postCategoryService.update(id, datosDto);
+    return res;
+  }
+
   @Get()
   findAll() {
     return this.postCategoryService.findAll();
@@ -31,12 +39,6 @@ export class PostCategoryController {
   @Get(':id')
   findOne(@Param('id') id: string): Promise<PostCategory> {
     return this.postCategoryService.findOne(id);
-  }
-
-  @Put(':id')
-  async update(@Param('id') id: any, @Body() datosDTO: any) {
-    const res = await this.postCategoryService.update(id, datosDTO);
-    return res;
   }
 
   @Delete(':id')

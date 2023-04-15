@@ -5,23 +5,23 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreatePostCategoryDto, UpdatePostCategoryDto } from './dto';
+import { CreatePostSalesUnitDto, UpdatePostSalesUnitDto } from './dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { PostCategory } from './entities/post-category.entity';
 import { Model, isValidObjectId } from 'mongoose';
+import { PostSalesUnit } from './entities/post-sales-unit.entity';
 
 @Injectable()
-export class PostCategoryService {
+export class PostSalesUnitService {
   // para manejar errores
-  private readonly logger = new Logger('AdCategoryService');
+  private readonly logger = new Logger('PostSalesUnitService');
 
   // CONSTRUCTOR
   constructor(
-    @InjectModel(PostCategory.name)
-    private postCategoryModel: Model<PostCategory>,
+    @InjectModel(PostSalesUnit.name)
+    private postSalesUnitModel: Model<PostSalesUnit>,
   ) {}
 
-  async create(dataDto: CreatePostCategoryDto): Promise<any> {
+  async create(dataDto: CreatePostSalesUnitDto): Promise<any> {
     const slug = await this.convertToSlug(dataDto.name);
     const object = await this.doestExists(slug);
     if (object) {
@@ -29,17 +29,17 @@ export class PostCategoryService {
     }
     try {
       dataDto.slug = slug;
-      const res = await this.postCategoryModel.create(dataDto);
+      const res = await this.postSalesUnitModel.create(dataDto);
       return res;
     } catch (error) {
       this.handleDBExceptions(error);
     }
   }
 
-  async update(ID: string, dataDto: UpdatePostCategoryDto): Promise<any> {
+  async update(ID: string, dataDto: UpdatePostSalesUnitDto): Promise<any> {
     this.findOne(ID);
     //console.log(dataDto);
-    const res = await this.postCategoryModel.findOneAndUpdate(
+    const res = await this.postSalesUnitModel.findOneAndUpdate(
       { _id: ID },
       dataDto,
       {
@@ -50,8 +50,8 @@ export class PostCategoryService {
     return res;
   }
 
-  async findAll(): Promise<PostCategory[]> {
-    const lista = await this.postCategoryModel
+  async findAll(): Promise<PostSalesUnit[]> {
+    const lista = await this.postSalesUnitModel
       .find({})
       //.populate('CountryState')
       .sort({ numero: 1 })
@@ -59,8 +59,8 @@ export class PostCategoryService {
     return lista;
   }
 
-  async findAllQuery(dataDto: any): Promise<PostCategory[]> {
-    const res = await this.postCategoryModel
+  async findAllQuery(dataDto: any): Promise<PostSalesUnit[]> {
+    const res = await this.postSalesUnitModel
       .find({ Country: dataDto.Country })
       //.populate('CountryState')
       .sort({ numero: 1 })
@@ -68,11 +68,11 @@ export class PostCategoryService {
     return res;
   }
 
-  async findOne(ID: string): Promise<PostCategory> {
+  async findOne(ID: string): Promise<PostSalesUnit> {
     let res: any;
 
     if (isValidObjectId(ID)) {
-      res = await this.postCategoryModel.findById(ID);
+      res = await this.postSalesUnitModel.findById(ID);
     }
 
     if (!res) throw new NotFoundException(`Id, name or no "${ID}" not found`);
@@ -81,11 +81,11 @@ export class PostCategoryService {
 
   async remove(id: string) {
     const data = await this.findOne(id);
-    await this.postCategoryModel.remove(data);
+    await this.postSalesUnitModel.remove(data);
   }
 
   async doestExists(slug: any): Promise<any> {
-    const res = await this.postCategoryModel.findOne({
+    const res = await this.postSalesUnitModel.findOne({
       slug: slug,
     });
     if (res) {

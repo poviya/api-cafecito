@@ -1,13 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
-import { StateCity } from 'src/modules/countries/state-city/entities/state-city.entity';
-import { CityZone } from 'src/modules/countries/city-zone/entities/city-zone.entity';
-import { Country } from 'src/modules/countries/country/entities/country.entity';
-import { CountryState } from 'src/modules/countries/country-state/entities/country-state.entity';
 import { User } from 'src/modules/users/user/entities/user.entity';
 import { PostMedia } from 'src/modules/posts/post-media/entities/post-media.entity';
 import { Money } from 'src/modules/moneys/money/entities/money.entity';
 import { PostCategory } from '../../post-category/entities/post-category.entity';
+import { PostSalesUnit } from '../../post-sales-unit/entities/post-sales-unit.entity';
 
 @Schema({ collection: 'posts', timestamps: true })
 export class Posts {
@@ -44,6 +41,9 @@ export class Posts {
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: User.name })
   User?: User;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: PostSalesUnit.name })
+  PostSalesUnit?: PostSalesUnit;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: PostCategory.name })
   PostCategory?: PostCategory;

@@ -25,8 +25,8 @@ export class PostMedia {
 
   @Prop({
     required: false,
-    enum: ['AD', 'POST', 'PROFILE', 'DOCUMENT'],
-    default: 'POST',
+    enum: ['ARTICLE'],
+    default: 'ARTICLE',
   })
   category: string;
 
