@@ -20,6 +20,7 @@ import {
 } from './dto/post.dto';
 import { Posts } from './entities/post.entity';
 import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
+import { CloudflareService } from '../post-media/s3/cloudflareService';
 
 @Injectable()
 export class PostService {
@@ -34,6 +35,7 @@ export class PostService {
     private postMediaService: PostMediaService,
     private userService: UserService,
     private readonly amazonStorageService: AmazonStorageService,
+    private readonly cloudflateService: CloudflareService,
   ) {}
 
   async create(dataDto: any, files, user: AuthUserDto): Promise<any> {
@@ -54,6 +56,7 @@ export class PostService {
         Money: dataDto.Money,
         tags: splitHastag(dataDto.description),
         type: 'ARTICLE',
+        weight: dataDto.weight,
         comment: dataDto.comment,
       };
       const res = await this.postModel.create(createPost);
@@ -69,7 +72,7 @@ export class PostService {
           const fileData: any = dataDto.filesArray.find(
             (file) => file._id === idFile,
           );
-          const response = await this.amazonStorageService.uploadFile(
+          const response = await this.cloudflateService.uploadFile(
             file,
             this.FOLDER,
           );
@@ -120,11 +123,11 @@ export class PostService {
     }
   }
 
-  async update(ID: string, dataDTO: any): Promise<any> {
+  async update(ID: string, dataDto: any): Promise<any> {
     await this.findOne(ID);
 
     try {
-      const res = await this.postModel.findOneAndUpdate(dataDTO);
+      const res = await this.postModel.findOneAndUpdate(dataDto);
       return res;
     } catch (error) {
       this.handleDBExceptions(error);
@@ -137,6 +140,8 @@ export class PostService {
     if (isValidObjectId(ID)) {
       res = await this.postModel
         .findOne({ _id: ID, type: 'ARTICLE' })
+        .populate('PostCategory')
+        .populate('PostSalesUnit')
         .populate('PostMedia')
         .populate('User');
     }
@@ -145,8 +150,19 @@ export class PostService {
     return res;
   }
 
+  async findOneId(ID: string) {
+    let res: any;
+
+    if (isValidObjectId(ID)) {
+      res = await this.postModel.findById(ID);
+    }
+
+    if (!res) throw new NotFoundException(`Id, name or no "${ID}" not found`);
+    return res;
+  }
+
   async remove(id: string) {
-    const data = await this.findOne(id);
+    const data = await this.findOneId(id);
     if (data) {
       if (data.PostMedia.length > 0) {
         data.PostMedia.map(async (item) => {
@@ -163,7 +179,7 @@ export class PostService {
     if (deletedCount === 0)
       throw new BadRequestException(`Id "${id}" not found`);
 
-    return;
+    return data;
   }
 
   async findAll(dataDto: any, paginationDto): Promise<any> {

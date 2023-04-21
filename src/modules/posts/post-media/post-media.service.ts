@@ -13,6 +13,7 @@ import { v4 as uuid } from 'uuid';
 import { User } from 'src/modules/users/user/entities/user.entity';
 import { AmazonStorageService } from 'src/modules/posts/post-media/s3/amazonStorageService';
 import { UtilsMediaService } from './utils/snapshot';
+import { CloudflareService } from './s3/cloudflareService';
 
 @Injectable()
 export class PostMediaService {
@@ -32,6 +33,7 @@ export class PostMediaService {
     @InjectModel(Posts.name) private postModel: Model<Posts>,
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly amazonStorageService: AmazonStorageService,
+    private readonly cloudflareService: CloudflareService,
     private readonly utilsMediaService: UtilsMediaService,
   ) {}
 
@@ -44,7 +46,7 @@ export class PostMediaService {
     //console.log('TAMAÑO DE IMAGES: ', objeto.AdImages.length);
 
     for (const file of files) {
-      const response = await this.amazonStorageService.uploadFile(
+      const response = await this.cloudflareService.uploadFile(
         file,
         this.FOLDER,
       );
@@ -203,14 +205,14 @@ export class PostMediaService {
       );
       console.log(resDelete);
       if (resDelete.key) {
-        this.amazonStorageService.s3Delete(resDelete.key);
+        this.cloudflareService.s3Delete(resDelete.key);
       }
       if (resDelete.keySnapshot) {
-        this.amazonStorageService.s3Delete(resDelete.keySnapshot);
+        this.cloudflareService.s3Delete(resDelete.keySnapshot);
       }
       return res;
     } catch (error) {
-      this.handleDBExceptions(error);
+      //this.handleDBExceptions(error);
     }
   }
 

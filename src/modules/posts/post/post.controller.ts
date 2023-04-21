@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ParseMongoIdPipe } from 'src/common/pipe/parse-mongo-id/parse-mongo-id.pipe';
@@ -22,6 +23,7 @@ import {
   FindAllUserDto,
   FindAllUserMediaDto,
   UpdatePostDto,
+  UpdateStatusDto,
 } from './dto/post.dto';
 import { PostService } from './post.service';
 import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
@@ -59,6 +61,15 @@ export class PostController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() dataDto: UpdatePostDto,
+  ) {
+    const res = this.postService.update(id, dataDto);
+    return res;
+  }
+
+  @Put('status/:id')
+  updateStatus(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @Body() dataDto: UpdateStatusDto,
   ) {
     const res = this.postService.update(id, dataDto);
     return res;
@@ -133,5 +144,10 @@ export class PostController {
     createDto.User = await user;
     const res = await this.postService.findAllCounter(createDto);
     return res;
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseMongoIdPipe) id: string) {
+    return this.postService.remove(id);
   }
 }

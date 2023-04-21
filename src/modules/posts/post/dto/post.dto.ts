@@ -1,4 +1,11 @@
-import { IsEnum, IsMongoId, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class FindAllUserDto {
   @IsString()
@@ -29,19 +36,43 @@ export class AnalyzeHastagsDto {
   text: string;
 }
 
-export enum TypeView {
-  FREE = 'FREE',
-  DAY = 'DAY',
-  UNLIMITED = 'UNLIMITED',
+export enum TypeWeight {
+  GR = 'GR',
+  KG = 'KG',
+}
+
+export enum TypeStatus {
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  EXPIRED = 'EXPIRED',
 }
 
 export class UpdatePostDto {
   @IsString()
+  title: string;
+
+  @IsString()
+  @IsOptional()
   description: string;
+
+  @IsMongoId()
+  PostSalesUnit: string;
+
+  @IsMongoId()
+  PostCategory: string;
 
   @IsNumber()
   price: number;
 
-  @IsEnum(TypeView)
-  type: TypeView;
+  @IsEnum(TypeWeight)
+  weight: TypeWeight;
+
+  @IsBoolean()
+  @IsOptional()
+  comment: boolean;
+}
+
+export class UpdateStatusDto {
+  @IsEnum(TypeStatus)
+  status: TypeStatus;
 }
