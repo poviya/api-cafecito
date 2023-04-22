@@ -54,7 +54,7 @@ export class PostCategoryService {
     const lista = await this.postCategoryModel
       .find({})
       //.populate('CountryState')
-      .sort({ numero: 1 })
+      .sort({ name: 1 })
       .exec();
     return lista;
   }

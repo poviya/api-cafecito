@@ -19,6 +19,7 @@ import { JwtAuthGuard } from 'src/modules/auth/jwt-auth.guard';
 import { fileFilter } from '../post-media/helpers';
 import {
   AnalyzeHastagsDto,
+  FindAllDto,
   FindAllPostDto,
   FindAllUserDto,
   FindAllUserMediaDto,
@@ -75,11 +76,11 @@ export class PostController {
     return res;
   }
 
-  @Post('find-all-user')
-  findAllUser(@Body() dataDto: FindAllUserDto) {
-    const res = this.postService.findAllUser(dataDto);
-    return res;
-  }
+  // @Post('find-all-user')
+  // findAllUser(@Body() dataDto: FindAllUserDto) {
+  //   const res = this.postService.findAllUser(dataDto);
+  //   return res;
+  // }
 
   @Post('find-all-user-media')
   findAllUserMedia(@Body() dataDto: FindAllUserMediaDto) {
@@ -113,18 +114,16 @@ export class PostController {
     return res;
   }
 
-  @UseGuards(JwtAuthGuard)
+  //+++++++++++++++++++++++ view products
   @Post('/find-all')
   async findAll(
     @Query() paginationDto: any,
-    @Body() createDto: any,
-    @CurrentUser() user: AuthUserDto,
+    @Body() createDto: FindAllDto,
   ): Promise<any> {
     const res = await this.postService.findAll(createDto, paginationDto);
     return res;
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('/find-all-infinite')
   async findAllInfinite(
     @Query() paginationDto: any,
@@ -145,6 +144,47 @@ export class PostController {
     const res = await this.postService.findAllCounter(createDto);
     return res;
   }
+  //+++++++++++++++++++++++ end view products
+
+  //+++++++++++++++++++++++ view user products
+  @UseGuards(JwtAuthGuard)
+  @Post('/find-all-user')
+  async findAllUser(
+    @Query() paginationDto: any,
+    @Body() createDto: FindAllUserDto,
+    @CurrentUser() user: any,
+  ): Promise<any> {
+    const res = await this.postService.findAllUser(
+      createDto,
+      paginationDto,
+      user,
+    );
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/find-all-user-infinite')
+  async findAllUserInfinite(
+    @Query() paginationDto: any,
+    @Body() createDto: any,
+    @CurrentUser() user: any,
+  ) {
+    const res = await this.postService.findAllUserInfinite(
+      createDto,
+      paginationDto,
+      user,
+    );
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/find-all-user-count')
+  async findAllUserCount(@Body() createDto: any, @CurrentUser() user: any) {
+    createDto.User = await user;
+    const res = await this.postService.findAllUserCounter(createDto, user);
+    return res;
+  }
+  //+++++++++++++++++++++++ end view user products
 
   @Delete(':id')
   remove(@Param('id', ParseMongoIdPipe) id: string) {

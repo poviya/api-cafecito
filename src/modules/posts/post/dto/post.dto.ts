@@ -7,12 +7,27 @@ import {
   IsString,
 } from 'class-validator';
 
-export class FindAllUserDto {
-  @IsString()
-  username: string;
+export enum TypeStatus {
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  EXPIRED = 'EXPIRED',
+}
 
-  @IsMongoId()
-  Site: string;
+export class FindAllDto {
+  @IsEnum(TypeStatus)
+  status: TypeStatus;
+
+  @IsString()
+  search: string;
+}
+
+export class FindAllUserDto {
+  @IsEnum(TypeStatus)
+  status: TypeStatus;
+
+  @IsString()
+  @IsOptional()
+  search: string;
 }
 
 export class FindAllUserMediaDto {
@@ -41,12 +56,6 @@ export enum TypeWeight {
   KG = 'KG',
 }
 
-export enum TypeStatus {
-  ACTIVE = 'ACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  EXPIRED = 'EXPIRED',
-}
-
 export class UpdatePostDto {
   @IsString()
   title: string;
@@ -66,6 +75,9 @@ export class UpdatePostDto {
 
   @IsEnum(TypeWeight)
   weight: TypeWeight;
+
+  @IsNumber()
+  weightAmount: number;
 
   @IsBoolean()
   @IsOptional()

@@ -45,6 +45,7 @@ export class Posts {
     enum: ['GR', 'KG'],
   })
   weight?: string;
+  @Prop({ required: true, default: 0 }) weightAmount?: number;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: User.name })
   User?: User;

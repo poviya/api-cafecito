@@ -14,6 +14,7 @@ import { PostMediaService } from '../post-media/post-media.service';
 import { AmazonStorageService } from '../post-media/s3/amazonStorageService';
 import { splitHastag } from 'src/common/helpers/utils';
 import {
+  FindAllDto,
   FindAllPostDto,
   FindAllUserDto,
   FindAllUserMediaDto,
@@ -57,6 +58,7 @@ export class PostService {
         tags: splitHastag(dataDto.description),
         type: 'ARTICLE',
         weight: dataDto.weight,
+        weightAmount: dataDto.weightAmount,
         comment: dataDto.comment,
       };
       const res = await this.postModel.create(createPost);
@@ -182,7 +184,8 @@ export class PostService {
     return data;
   }
 
-  async findAll(dataDto: any, paginationDto): Promise<any> {
+  //++++++++++++++++++++++++  view web //////////
+  async findAll(dataDto: FindAllDto, paginationDto): Promise<any> {
     const { limit = 10, offset = 0 } = paginationDto;
     const data: any = {
       status: { $eq: dataDto.status },
@@ -195,7 +198,6 @@ export class PostService {
       }
     }
 
-    console.log(data);
     const [resTotal, resPost] = await Promise.all([
       this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
       this.postModel
@@ -203,6 +205,7 @@ export class PostService {
         .populate('PostMedia')
         .populate('PostCategory')
         .populate('PostSalesUnit')
+        .populate('Money')
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(offset)
@@ -233,6 +236,7 @@ export class PostService {
       .populate('PostMedia')
       .populate('PostCategory')
       .populate('PostSalesUnit')
+      .populate('Money')
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(offset)
@@ -241,27 +245,6 @@ export class PostService {
     return {
       data: res,
     };
-  }
-
-  async findAllUser(dataDto: FindAllUserDto) {
-    console.log(dataDto);
-    const user = await this.userService.slug(dataDto);
-    if (user) {
-      const list = await this.postModel
-        .find({ User: user._id, type: 'ARTICLE' })
-        .populate('PostMedia')
-        .populate([
-          {
-            path: 'User',
-            populate: { path: 'Profile' },
-          },
-        ])
-        .sort({ createdAt: -1 })
-        .exec();
-      return list;
-    } else {
-      return null;
-    }
   }
 
   async findAllCounter(dataDto: any): Promise<any> {
@@ -281,6 +264,102 @@ export class PostService {
     };
     return data;
   }
+  // end view web
+
+  //+++++++++++++++++++++++ view user products
+  async findAllUser(
+    dataDto: FindAllDto,
+    paginationDto,
+    user: AuthUserDto,
+  ): Promise<any> {
+    const { limit = 10, offset = 0 } = paginationDto;
+    const data: any = {
+      User: user._id,
+      status: { $eq: dataDto.status },
+    };
+
+    if (dataDto.search) {
+      if (dataDto.search.trim()) {
+        data.$text = { $search: new RegExp(dataDto.search) };
+        delete dataDto.search;
+      }
+    }
+
+    const [resTotal, resPost] = await Promise.all([
+      this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
+      this.postModel
+        .find({ ...data, type: 'ARTICLE' })
+        .populate('PostMedia')
+        .populate('PostCategory')
+        .populate('PostSalesUnit')
+        .populate('Money')
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(offset)
+        .exec(),
+    ]);
+    return {
+      totalPages: resTotal,
+      data: resPost,
+    };
+  }
+
+  async findAllUserInfinite(
+    dataDto: any,
+    paginationDto,
+    user: AuthUserDto,
+  ): Promise<any> {
+    const { limit = 10, offset = 0 } = paginationDto;
+
+    const data: any = {
+      User: user._id,
+      status: { $eq: dataDto.status },
+    };
+
+    if (dataDto.search) {
+      if (dataDto.search.trim()) {
+        data.$text = { $search: new RegExp(dataDto.search) };
+        delete dataDto.search;
+      }
+    }
+
+    const res = await this.postModel
+      .find({ ...data, type: 'ARTICLE' })
+      .populate('PostMedia')
+      .populate('PostCategory')
+      .populate('PostSalesUnit')
+      .populate('Money')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(offset)
+      .exec();
+
+    return {
+      data: res,
+    };
+  }
+
+  async findAllUserCounter(dataDto: any, user: AuthUserDto): Promise<any> {
+    const [resActive, resInactive] = await Promise.all([
+      this.postModel.countDocuments({
+        User: user._id,
+        status: 'ACTIVE',
+        type: 'ARTICLE',
+      }),
+      this.postModel.countDocuments({
+        User: user._id,
+        status: 'SUSPENDED',
+        type: 'ARTICLE',
+      }),
+    ]);
+
+    const data = {
+      active: resActive,
+      inactive: resInactive,
+    };
+    return data;
+  }
+  //+++++++++++++++++++++++ end view user products
 
   async findAllUserMedia(dataDto: FindAllUserMediaDto) {
     const list = await this.postMediaModel
