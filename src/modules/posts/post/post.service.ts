@@ -193,12 +193,13 @@ export class PostService {
   //++++++++++++++++++++++++  view web //////////
   async findAll(dataDto: FindAllDto, paginationDto): Promise<any> {
     const { limit = 10, offset = 0 } = paginationDto;
+    let resPostCategoy: any;
     const data: any = {
       status: { $eq: dataDto.status },
     };
 
     if (dataDto.slugPostCategory) {
-      const resPostCategoy = await this.postCategoryService.findOneSlug({
+      resPostCategoy = await this.postCategoryService.findOneSlug({
         slug: dataDto.slugPostCategory,
       });
       if (resPostCategoy) {
@@ -210,7 +211,6 @@ export class PostService {
         data.$text = { $search: new RegExp(dataDto.search) };
       }
     }
-    console.log(dataDto);
     const [resTotal, resPost] = await Promise.all([
       this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
       this.postModel
@@ -226,6 +226,7 @@ export class PostService {
     ]);
     return {
       totalPages: resTotal,
+      postCategory: resPostCategoy,
       data: resPost,
     };
   }
