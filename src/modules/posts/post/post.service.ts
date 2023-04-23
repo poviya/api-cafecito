@@ -43,7 +43,7 @@ export class PostService {
     let resUpdate;
     try {
       console.log(dataDto);
-      const code = 'CO' + this.generateRandomString(10) + Date.now();
+      const code = 'CO' + this.generateRandomString(10); //+ Date.now();
       const slug = (await this.convertToSlug(dataDto.title)) + code;
       const createPost = {
         title: dataDto.title,
@@ -145,26 +145,29 @@ export class PostService {
         .populate('PostCategory')
         .populate('PostSalesUnit')
         .populate('PostMedia')
+        .populate('Money')
         .populate('User');
     }
 
-    if (!res) throw new NotFoundException(`Id, name or no "${ID}" not found`);
+    if (!res) throw new NotFoundException(`Id, "${ID}" not found`);
     return res;
   }
 
-  async findOneId(ID: string) {
-    let res: any;
+  async findOneSlug(slug: string) {
+    const res = await this.postModel
+      .findOne({ slug: slug, type: 'ARTICLE' })
+      .populate('PostCategory')
+      .populate('PostSalesUnit')
+      .populate('PostMedia')
+      .populate('Money')
+      .populate('User');
 
-    if (isValidObjectId(ID)) {
-      res = await this.postModel.findById(ID);
-    }
-
-    if (!res) throw new NotFoundException(`Id, name or no "${ID}" not found`);
+    if (!res) throw new NotFoundException(`SLug, "${slug}" not found`);
     return res;
   }
 
   async remove(id: string) {
-    const data = await this.findOneId(id);
+    const data = await this.findOne(id);
     if (data) {
       if (data.PostMedia.length > 0) {
         data.PostMedia.map(async (item) => {

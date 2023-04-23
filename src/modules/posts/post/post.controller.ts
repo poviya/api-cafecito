@@ -96,8 +96,13 @@ export class PostController {
 
   @Get(':id')
   findOne(@Param('id', ParseMongoIdPipe) id: string) {
-    console.log(1);
     const res = this.postService.findOne(id);
+    return res;
+  }
+
+  @Get('slug/:slug')
+  findOneSlug(@Param('slug') slug: string) {
+    const res = this.postService.findOneSlug(slug);
     return res;
   }
 
