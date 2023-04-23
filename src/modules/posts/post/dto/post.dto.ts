@@ -18,7 +18,16 @@ export class FindAllDto {
   status: TypeStatus;
 
   @IsString()
+  @IsOptional()
   search: string;
+
+  @IsString()
+  @IsOptional()
+  slugPostCategory: string;
+
+  @IsMongoId()
+  @IsOptional()
+  PostCategory: string;
 }
 
 export class FindAllUserDto {

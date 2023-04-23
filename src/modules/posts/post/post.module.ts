@@ -6,13 +6,16 @@ import { PostMediaService } from '../post-media/post-media.service';
 import { UserModule } from 'src/modules/users/user/user.module';
 import { PostService } from './post.service';
 import { PostController } from './post.controller';
+import { PostCategoryService } from '../post-category/post-category.service';
+import { PostCategoryModule } from '../post-category/post-category.module';
 
 @Module({
   controllers: [PostController],
-  providers: [PostMediaService, PostService],
+  providers: [PostMediaService, PostService, PostCategoryService],
   imports: [
     MongooseModule.forFeature([{ name: Posts.name, schema: PostSchema }]),
     forwardRef(() => PostMediaModule),
+    forwardRef(() => PostCategoryModule),
     forwardRef(() => UserModule),
     forwardRef(() => UserModule),
   ],

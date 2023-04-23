@@ -15,6 +15,6 @@ import {
       { name: PostCategory.name, schema: PostCategorySchema },
     ]),
   ],
-  exports: [MongooseModule],
+  exports: [MongooseModule, PostCategoryService],
 })
 export class PostCategoryModule {}

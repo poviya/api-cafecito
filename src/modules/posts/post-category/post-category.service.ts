@@ -5,7 +5,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreatePostCategoryDto, UpdatePostCategoryDto } from './dto';
+import {
+  CreatePostCategoryDto,
+  FindOneSlugDto,
+  UpdatePostCategoryDto,
+} from './dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { PostCategory } from './entities/post-category.entity';
 import { Model, isValidObjectId } from 'mongoose';
@@ -65,6 +69,13 @@ export class PostCategoryService {
       //.populate('CountryState')
       .sort({ numero: 1 })
       .exec();
+    return res;
+  }
+
+  async findOneSlug(dataDto: FindOneSlugDto) {
+    const res = await this.postCategoryModel.findOne({ slug: dataDto.slug });
+
+    if (!res) throw new NotFoundException(`Slug, "${dataDto.slug}" not found`);
     return res;
   }
 

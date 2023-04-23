@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import e from 'express';
-import { isValidObjectId, Model } from 'mongoose';
+import mongoose, { isValidObjectId, Model } from 'mongoose';
 import { UserService } from 'src/modules/users/user/user.service';
 import { PostMedia } from '../post-media/entities/post-media.entity';
 import { PostMediaService } from '../post-media/post-media.service';
@@ -22,17 +22,20 @@ import {
 import { Posts } from './entities/post.entity';
 import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
 import { CloudflareService } from '../post-media/s3/cloudflareService';
+import { PostCategoryService } from '../post-category/post-category.service';
 
 @Injectable()
 export class PostService {
   FOLDER = 'cafecito/post';
   // para manejar errores
   private readonly logger = new Logger('PostService');
+  ObjectId = mongoose.Types.ObjectId;
   constructor(
     @InjectModel(Posts.name) private postModel: Model<Posts>,
     @InjectModel(PostMedia.name)
     private postMediaModel: Model<PostMedia>,
     //@Inject(forwardRef(() => PostMediaService))
+    private postCategoryService: PostCategoryService,
     private postMediaService: PostMediaService,
     private userService: UserService,
     private readonly amazonStorageService: AmazonStorageService,
@@ -194,13 +197,20 @@ export class PostService {
       status: { $eq: dataDto.status },
     };
 
+    if (dataDto.slugPostCategory) {
+      const resPostCategoy = await this.postCategoryService.findOneSlug({
+        slug: dataDto.slugPostCategory,
+      });
+      if (resPostCategoy) {
+        data.PostCategory = new this.ObjectId(resPostCategoy._id);
+      }
+    }
     if (dataDto.search) {
       if (dataDto.search.trim()) {
         data.$text = { $search: new RegExp(dataDto.search) };
-        delete dataDto.search;
       }
     }
-
+    console.log(dataDto);
     const [resTotal, resPost] = await Promise.all([
       this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
       this.postModel
@@ -271,7 +281,7 @@ export class PostService {
 
   //+++++++++++++++++++++++ view user products
   async findAllUser(
-    dataDto: FindAllDto,
+    dataDto: FindAllUserDto,
     paginationDto,
     user: AuthUserDto,
   ): Promise<any> {
