@@ -15,6 +15,7 @@ import { join } from 'path';
 import { CommonModule } from './common/common.module';
 import { TaxesModule } from './modules/taxes/taxes.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { CoursesModule } from './modules/courses/courses.module';
 
 //import LocalSession from 'telegraf-session-local';
 
@@ -49,6 +50,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
     CommonModule,
     TaxesModule,
     SuppliersModule,
+    CoursesModule,
 
     //OperacionesModule,
     //ProgramasModule,

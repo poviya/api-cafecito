@@ -1,5 +1,3 @@
-import { ObjectId } from 'mongoose';
-
 export interface ResponseApi {
   ok: boolean;
   data: Datum[];
