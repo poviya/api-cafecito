@@ -13,9 +13,11 @@ import { MoneyModule } from 'src/modules/moneys/money/money.module';
 import { MoneyConvertModule } from 'src/modules/moneys/money-convert/money-convert.module';
 import { PostModule } from 'src/modules/posts/post/post.module';
 import { CourseModule } from 'src/modules/courses/course/course.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    HttpModule,
     MongooseModule.forFeature([
       { name: PaymentOrder.name, schema: PaymentOrderSchema },
     ]),

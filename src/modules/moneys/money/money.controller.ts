@@ -19,17 +19,15 @@ export class MoneyController {
   constructor(private readonly moneyService: MoneyService) {}
 
   @Post()
-  async create(@Res() res: any, @Body() dataDto: any) {
-    const object = await this.moneyService.create(dataDto);
-    if (!object) throw new NotFoundException('does not exist!');
-    return res.status(HttpStatus.OK).json(object);
+  async create(@Body() dataDto: any) {
+    const res = await this.moneyService.create(dataDto);
+    return res;
   }
 
   @Put('/:id')
-  async edit(@Res() res: any, @Param('id') id: any, @Body() dataDto: any) {
-    const object = await this.moneyService.edit(id, dataDto);
-    if (!object) throw new NotFoundException('does not exist!');
-    return res.status(HttpStatus.OK).json(object);
+  async edit(@Param('id') id: any, @Body() dataDto: any) {
+    const res = await this.moneyService.edit(id, dataDto);
+    return res;
   }
 
   @Get()
@@ -38,13 +36,13 @@ export class MoneyController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Money> {
-    return this.moneyService.findOne(id);
+  findById(@Param('id') id: string): Promise<Money> {
+    return this.moneyService.findById(id);
   }
 
-  @Post('find-one-iso')
-  async findOneIso(@Body() dataDto: any) {
-    const object = await this.moneyService.findOneIso(dataDto);
+  @Post('find-one')
+  async findOne(@Body() dataDto: any) {
+    const object = await this.moneyService.findOne(dataDto);
     return object;
   }
 

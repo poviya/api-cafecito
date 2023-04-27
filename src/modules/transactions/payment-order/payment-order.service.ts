@@ -7,6 +7,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import { PaymentOrder } from './entities/payment-order.entity';
 import { Posts } from 'src/modules/posts/post/entities/post.entity';
+import { PostService } from 'src/modules/posts/post/post.service';
+import { CreateProductPaymentOrderDto } from './dto/index.dto';
+import { HttpService } from '@nestjs/axios';
+import axios from 'axios';
+
+import { map } from 'rxjs';
 
 @Injectable()
 export class PaymentOrderService {
@@ -15,20 +21,49 @@ export class PaymentOrderService {
     private readonly paymentOrderModel: Model<PaymentOrder>,
     @InjectModel(Posts.name)
     private readonly PostModel: Model<Posts>,
+    private readonly postService: PostService,
+    private readonly httpService: HttpService,
   ) {}
 
-  async createProduct(dataDto: any): Promise<any> {
+  async createProduct(dataDto: CreateProductPaymentOrderDto): Promise<any> {
+    const resPost = await this.postService.findOne(dataDto.Post);
     const data = {
-      Post: dataDto.Post,
-      codeCollection: dataDto.codeCollection,
-      amount: dataDto.amount,
-      Money: dataDto.Money,
-      amountBalance: dataDto.price,
+      codeCollection: `CE${this.generateCodePayment()}`,
+      amount: resPost.price,
+      Money: resPost.Money,
+      quantity: dataDto.quantity,
+      amountBalance:
+        Number(resPost.price) * Number(dataDto.quantity) -
+        Number(dataDto.amountDiscount),
       amountDiscount: dataDto.amountDiscount,
       production: dataDto.production,
+      paymentMethod: 'CARD',
+      paymentType: 'SALE_PRODUCT',
+      paymentDetails: {
+        Post: resPost,
+      },
     };
-    const resCreate = await this.paymentOrderModel.create(data);
-    return resCreate;
+
+    const url = 'http://localhost:5000/api/payment-order/create-processor';
+    //const url = 'https://api.poviya.com/api/payment-order/create-processor';
+    const resProcessor = await this.httpService
+      .post(url, {
+        Site: process.env.POVIYA_ID,
+        amount: data.amountBalance,
+        money: resPost.Money.iso,
+        codeCollection: data.codeCollection,
+        production: dataDto.production,
+      })
+      .pipe(map((response) => response.data))
+      .toPromise();
+    //return data;
+    console.log(resProcessor);
+    if (resProcessor) {
+      const resCreate = await this.paymentOrderModel.create(data);
+      return resCreate;
+    } else {
+      return false;
+    }
   }
 
   async createCourse(dataDto: any): Promise<any> {
@@ -45,171 +80,62 @@ export class PaymentOrderService {
     return resCreate;
   }
 
-  async edit(ID: string, datosDTO: any): Promise<any> {
-    const res = await this.paymentOrderModel.updateOne({ _id: ID }, datosDTO, {
-      new: true,
-    });
+  async updateOne(codeCollection: string, datosDTO: any): Promise<any> {
+    const res = await this.paymentOrderModel.findOneAndUpdate(
+      { codeCollection: codeCollection },
+      datosDTO,
+      {
+        new: true,
+      },
+    );
     return res;
   }
 
   async transaction(dataDto: any): Promise<any> {
-    if (dataDto.receipt.decision == 'ACCEPT') {
-      const today = new Date();
-      let sumDate = 0;
-      console.log(today);
-      if (dataDto.dataPaymentOder.Post.expirationDate > today) {
-        sumDate = this.sumDaysToDate(
-          dataDto.dataPaymentOder.AdProduct.days,
-          dataDto.dataPaymentOder.Post.expirationDate,
-        );
-        console.log(new Date(dataDto.dataPaymentOder.Post.expirationDate));
-      } else {
-        console.log(dataDto.dataPaymentOder.AdProduct.days);
-        sumDate = this.sumDaysToDate(
-          dataDto.dataPaymentOder.AdProduct.days,
-          today,
-        );
-        console.log(today);
-      }
-
-      const publishedCount =
-        Number(dataDto.dataPaymentOder.Post.publishedCount) + 1;
-
-      const dataDtoPost = {
-        expirationDate: sumDate,
-        published: true,
-        status: 'ACTIVE',
-        plan: dataDto.dataPaymentOder.AdProduct.type,
-        publishedCount: publishedCount,
-        planAt: new Date(),
-        publishedAt: new Date(),
+    let resPaymentOrder: any;
+    const res = await this.findOneCodeCollection(
+      dataDto.receipt.req_reference_number,
+    );
+    if (!res) {
+      return {
+        ok: false,
+        data: {},
+        message: 'No existe codigo de recaudacion',
       };
-      console.log(dataDtoPost);
-      const resAd = await this.PostModel.updateOne(
-        { _id: dataDto.dataPaymentOder.Post._id },
-        dataDtoPost,
-        {
-          new: true,
-        },
-      );
+    }
 
+    if (dataDto.receipt.decision == 'ACCEPT') {
       const datosDTOPaymentOrder = {
         status: 'PAYMENT',
         receipt: dataDto.receipt,
       };
 
-      const resPaymentOrder = await this.paymentOrderModel.updateOne(
-        { _id: dataDto.dataPaymentOder._id },
+      resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
+        { _id: res._id },
         datosDTOPaymentOrder,
         {
           new: true,
         },
       );
-
-      return resPaymentOrder;
-    } else if (dataDto.receipt.decision == 'CANCELED') {
-      const datosDTOPaymentOrder = {
-        status: 'CANCELED',
-        receipt: dataDto.receipt,
-      };
-
-      const resPaymentOrder = await this.paymentOrderModel.updateOne(
-        { _id: dataDto.dataPaymentOder._id },
-        datosDTOPaymentOrder,
-        {
-          new: true,
-        },
-      );
-
-      const publishedCount =
-        Number(dataDto.dataPaymentOder.Post.publishedCount) - 1;
-
-      const dataDtoPost = {
-        expirationDate: 0,
-        published: false,
-        status: 'ACTIVE',
-        plan: 0,
-        publishedCount: publishedCount,
-        planAt: new Date(),
-        publishedAt: null,
-      };
-      console.log(dataDtoPost);
-      const resAd = await this.PostModel.updateOne(
-        { _id: dataDto.dataPaymentOder.Post._id },
-        dataDtoPost,
-        {
-          new: true,
-        },
-      );
-
-      return resPaymentOrder;
-    } else if (dataDto.receipt.decision == 'REVERTED') {
-      const datosDTOPaymentOrder = {
-        status: 'REVERTED',
-        receipt: dataDto.receipt,
-      };
-
-      const resPaymentOrder = await this.paymentOrderModel.updateOne(
-        { _id: dataDto.dataPaymentOder._id },
-        datosDTOPaymentOrder,
-        {
-          new: true,
-        },
-      );
-
-      const publishedCount =
-        Number(dataDto.dataPaymentOder.Post.publishedCount) - 1;
-
-      const dataDtoPost = {
-        expirationDate: 0,
-        published: false,
-        status: 'ACTIVE',
-        plan: 0,
-        publishedCount: publishedCount,
-        planAt: new Date(),
-        publishedAt: null,
-      };
-      console.log(dataDtoPost);
-      const resAd = await this.PostModel.updateOne(
-        { _id: dataDto.dataPaymentOder.Post._id },
-        dataDtoPost,
-        {
-          new: true,
-        },
-      );
-
-      return resPaymentOrder;
-    } else if (dataDto.receipt.decision == 'ERROR') {
+    } else {
       const datosDTOPaymentOrder = {
         status: 'ERROR',
         receipt: dataDto.receipt,
       };
 
-      const resPaymentOrder = await this.paymentOrderModel.updateOne(
+      resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
         { _id: dataDto.dataPaymentOder._id },
         datosDTOPaymentOrder,
         {
           new: true,
         },
       );
-      return resPaymentOrder;
     }
-    /*
-        suma = hoy.getTime() + semanaEnMilisegundos; //getTime devuelve milisegundos de esa fecha
-        let fechaDentroDeUnaSemana = new Date(suma);
-        let hoy = new Date();
-        let mañana = new Date(hoy.getTime() + 1000 * 60 * 60 * 24); new Date(hoy.getTime() + 1000 * 60 * 60 * 24); //Calcular fecha a futuro para ejemplificar
-
-        const res = await this.paymentOrderModel.updateOne(
-            { _id: dataDto.PaymentOrder },
-            dataDto,
-            {
-            new: true,
-            },
-        );
-
-        return res;
-        */
+    return {
+      ok: true,
+      data: resPaymentOrder,
+      message: 'Exito en la transaccion',
+    };
   }
 
   async findAll(): Promise<PaymentOrder[]> {
@@ -221,12 +147,7 @@ export class PaymentOrderService {
       .findOne({
         codeCollection: codeCollection,
       })
-      .populate('Site')
-      .populate('Card')
-      .populate('MoneyPay')
       .populate('Money')
-      .populate('MoneyTransaction')
-      .populate('Sender')
       .exec();
     return res;
   }
@@ -238,7 +159,6 @@ export class PaymentOrderService {
       res = await this.paymentOrderModel
         .findById(ID)
         .populate('Country')
-        .populate('Post')
         .populate('Card')
         .populate('MoneyPay')
         .populate('Money')

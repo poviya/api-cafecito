@@ -12,6 +12,8 @@ import { Posts } from 'src/modules/posts/post/entities/post.entity';
 })
 @Schema({ collection: 'payment-orders', timestamps: true })
 export class PaymentOrder {
+  _id: string;
+
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Posts.name })
   Post?: Posts;
 
@@ -45,13 +47,6 @@ export class PaymentOrder {
     default: 'PETITION',
   })
   status?: string;
-
-  @Prop({
-    required: true,
-    default: 'CASH',
-    enum: ['CASH', 'CREDIT'],
-  })
-  paymentConditions?: string;
 
   @Prop({ required: false, type: Object }) paymentDetails?: object;
 

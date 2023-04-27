@@ -26,7 +26,7 @@ export class MoneyService {
     return this.MoneyModel.find().sort({ iso: 1 }).exec();
   }
 
-  async findOne(ID: string) {
+  async findById(ID: string) {
     let res: any;
     if (isValidObjectId(ID)) {
       res = await this.MoneyModel.findById(ID).exec();
@@ -36,7 +36,7 @@ export class MoneyService {
     return res;
   }
 
-  async findOneIso(dataDto: any): Promise<any> {
+  async findOne(dataDto: any): Promise<any> {
     const res = await this.MoneyModel.findOne({ iso: dataDto.iso }).exec();
     if (!res) throw new NotFoundException('does not exist!');
     return res;
