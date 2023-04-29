@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,6 +14,7 @@ import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 
 import { map } from 'rxjs';
+import { CustomerService } from 'src/modules/customers/customer/customer.service';
 
 @Injectable()
 export class PaymentOrderService {
@@ -20,49 +22,54 @@ export class PaymentOrderService {
     @InjectModel(PaymentOrder.name)
     private readonly paymentOrderModel: Model<PaymentOrder>,
     @InjectModel(Posts.name)
-    private readonly PostModel: Model<Posts>,
     private readonly postService: PostService,
     private readonly httpService: HttpService,
+    private readonly customerService: CustomerService,
   ) {}
 
-  async createProduct(dataDto: CreateProductPaymentOrderDto): Promise<any> {
-    const resPost = await this.postService.findOne(dataDto.Post);
-    const data = {
-      codeCollection: `CE${this.generateCodePayment()}`,
-      amount: resPost.price,
-      Money: resPost.Money,
-      quantity: dataDto.quantity,
-      amountBalance:
-        Number(resPost.price) * Number(dataDto.quantity) -
-        Number(dataDto.amountDiscount),
-      amountDiscount: dataDto.amountDiscount,
-      production: dataDto.production,
-      paymentMethod: 'CARD',
-      paymentType: 'SALE_PRODUCT',
-      paymentDetails: {
-        Post: resPost,
-      },
-    };
+  async createProduct(dataDto: CreateProductPaymentOrderDto) {
+    try {
+      const resPost = await this.postService.findById(dataDto.Post);
+      const data = {
+        codeCollection: `CE${this.generateCodePayment()}`,
+        amount: resPost.price,
+        Money: resPost.Money,
+        quantity: dataDto.quantity,
+        amountBalance:
+          Number(resPost.price) * Number(dataDto.quantity) -
+          Number(dataDto.amountDiscount),
+        amountDiscount: dataDto.amountDiscount,
+        production: dataDto.production,
+        paymentMethod: 'CARD',
+        paymentType: 'SALE_PRODUCT',
+        paymentDetails: {
+          Post: resPost,
+        },
+      };
 
-    const url = 'http://localhost:5000/api/payment-order/create-processor';
-    //const url = 'https://api.poviya.com/api/payment-order/create-processor';
-    const resProcessor = await this.httpService
-      .post(url, {
-        Site: process.env.POVIYA_ID,
-        amount: data.amountBalance,
+      const dataCallback = {
+        poviyaCommerceId: process.env.POVIYA_COMMERCE_ID,
+        poviyaUrlCallback: process.env.POVIYA_URL_CALLBACK,
+        poviyaUrlReturn: process.env.POVIYA_URL_RETURN,
+        proviyaProduction: !!process.env.POVIYA_PRODUCTION,
+        amount: Number(data.amountBalance),
         money: resPost.Money.iso,
         codeCollection: data.codeCollection,
-        production: dataDto.production,
-      })
-      .pipe(map((response) => response.data))
-      .toPromise();
-    //return data;
-    console.log(resProcessor);
-    if (resProcessor) {
-      const resCreate = await this.paymentOrderModel.create(data);
-      return resCreate;
-    } else {
-      return false;
+      };
+      // const url = 'http://192.168.43.253:5000/api/payment-order/checkout';
+      const url = 'https://api.poviya.com/api/payment-order/checkout';
+      const resProcessor = await this.httpService
+        .post(url, dataCallback)
+        .pipe(map((response) => response.data))
+        .toPromise();
+      if (resProcessor.ok == true) {
+        const resCreate = await this.paymentOrderModel.create(data);
+        return resCreate;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      this.handleDBExceptions(error);
     }
   }
 
@@ -92,50 +99,66 @@ export class PaymentOrderService {
   }
 
   async transaction(dataDto: any): Promise<any> {
-    let resPaymentOrder: any;
-    const res = await this.findOneCodeCollection(
-      dataDto.receipt.req_reference_number,
-    );
-    if (!res) {
+    try {
+      console.log(dataDto);
+      let resPaymentOrder: any;
+      const res = await this.findOneCodeCollection(
+        dataDto.receipt.req_reference_number,
+      );
+      if (!res) {
+        return {
+          ok: false,
+          data: {},
+          message: 'No existe codigo de recaudacion',
+        };
+      }
+
+      if (dataDto.receipt.decision == 'ACCEPT') {
+        const dataCustomer = {
+          name: res.Customer.name,
+          lastname: res.Customer.lastname,
+          email: res.Customer.email,
+          phone: res.Customer.phone,
+          address: res.Customer.address,
+          city: res.Customer.city,
+          state: res.Customer.state,
+          country: res.Customer.country,
+          postalCode: res.Customer.postalCode,
+        };
+        const resCustomer = await this.customerService.create(dataCustomer);
+        const datosDTOPaymentOrder = {
+          status: 'PAYMENT',
+          Customer: resCustomer._id,
+          receipt: dataDto.receipt,
+        };
+
+        resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
+          { _id: res._id },
+          datosDTOPaymentOrder,
+          {
+            new: true,
+          },
+        );
+      } else {
+        const datosDTOPaymentOrder = {
+          status: 'ERROR',
+          receipt: dataDto.receipt,
+        };
+
+        resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
+          { _id: dataDto.dataPaymentOder._id },
+          datosDTOPaymentOrder,
+          {
+            new: true,
+          },
+        );
+      }
       return {
-        ok: false,
-        data: {},
-        message: 'No existe codigo de recaudacion',
+        ok: true,
+        data: resPaymentOrder,
+        message: 'Exito en la transaccion',
       };
-    }
-
-    if (dataDto.receipt.decision == 'ACCEPT') {
-      const datosDTOPaymentOrder = {
-        status: 'PAYMENT',
-        receipt: dataDto.receipt,
-      };
-
-      resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
-        { _id: res._id },
-        datosDTOPaymentOrder,
-        {
-          new: true,
-        },
-      );
-    } else {
-      const datosDTOPaymentOrder = {
-        status: 'ERROR',
-        receipt: dataDto.receipt,
-      };
-
-      resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
-        { _id: dataDto.dataPaymentOder._id },
-        datosDTOPaymentOrder,
-        {
-          new: true,
-        },
-      );
-    }
-    return {
-      ok: true,
-      data: resPaymentOrder,
-      message: 'Exito en la transaccion',
-    };
+    } catch (error) {}
   }
 
   async findAll(): Promise<PaymentOrder[]> {
@@ -148,23 +171,16 @@ export class PaymentOrderService {
         codeCollection: codeCollection,
       })
       .populate('Money')
+      .populate('Customer')
       .exec();
     return res;
   }
 
-  async findOne(ID: string) {
+  async findById(ID: string) {
     let res: any;
 
     if (isValidObjectId(ID)) {
-      res = await this.paymentOrderModel
-        .findById(ID)
-        .populate('Country')
-        .populate('Card')
-        .populate('MoneyPay')
-        .populate('Money')
-        .populate('MoneyTransaction')
-        .populate('Sender')
-        .exec();
+      res = await this.paymentOrderModel.findById(ID).populate('Money').exec();
     }
 
     if (!res) throw new NotFoundException(`Id, name or no "${ID}" not found`);
@@ -246,5 +262,22 @@ export class PaymentOrderService {
       console.log(item._id);
     }
     return null;
+  }
+
+  private handleDBExceptions(error: any) {
+    if (error.code === 11000) {
+      throw new BadRequestException(
+        `Exists in db ${JSON.stringify(error.keyValue)}`,
+      );
+    }
+    if (error.code === '23505') {
+      throw new BadRequestException(error.detail);
+    }
+
+    //this.logger.error(error);
+    console.log(error);
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

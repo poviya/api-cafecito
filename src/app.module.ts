@@ -17,6 +17,7 @@ import { TaxesModule } from './modules/taxes/taxes.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { CustomersModule } from './modules/customers/customers.module';
 
 //import LocalSession from 'telegraf-session-local';
 
@@ -53,6 +54,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     SuppliersModule,
     CoursesModule,
     TransactionsModule,
+    CustomersModule,
     //OperacionesModule,
     //ProgramasModule,
 

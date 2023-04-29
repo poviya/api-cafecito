@@ -58,8 +58,8 @@ export class PaymentOrderController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<PaymentOrder> {
-    return this.paymentOrderService.findOne(id);
+  async findById(@Param('id') id: string): Promise<PaymentOrder> {
+    return this.paymentOrderService.findById(id);
   }
 
   @Delete(':id')

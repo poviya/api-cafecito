@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import { Course } from 'src/modules/courses/course/entities/course.entity';
+import { Customer } from 'src/modules/customers/customer/entities/customer.entity';
 import { Money } from 'src/modules/moneys/money/entities/money.entity';
 import { Posts } from 'src/modules/posts/post/entities/post.entity';
 
@@ -14,11 +15,8 @@ import { Posts } from 'src/modules/posts/post/entities/post.entity';
 export class PaymentOrder {
   _id: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Posts.name })
-  Post?: Posts;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Course.name })
-  Course?: Course;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Customer' })
+  Customer?: Customer;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Money.name })
   Money?: Money;

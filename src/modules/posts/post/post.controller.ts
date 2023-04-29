@@ -95,8 +95,8 @@ export class PostController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseMongoIdPipe) id: string) {
-    const res = this.postService.findOne(id);
+  findById(@Param('id', ParseMongoIdPipe) id: string) {
+    const res = this.postService.findById(id);
     return res;
   }
 

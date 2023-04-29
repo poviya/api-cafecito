@@ -129,7 +129,7 @@ export class PostService {
   }
 
   async update(ID: string, dataDto: any): Promise<any> {
-    await this.findOne(ID);
+    await this.findById(ID);
 
     try {
       const res = await this.postModel.findOneAndUpdate(dataDto);
@@ -139,21 +139,21 @@ export class PostService {
     }
   }
 
-  async findOne(ID: string) {
+  async findById(ID: string) {
     let res: any;
-
-    if (isValidObjectId(ID)) {
-      res = await this.postModel
-        .findOne({ _id: ID, type: 'ARTICLE' })
-        .populate('PostCategory')
-        .populate('PostSalesUnit')
-        .populate('PostMedia')
-        .populate('Money')
-        .populate('User');
-    }
-
-    if (!res) throw new NotFoundException(`Id, "${ID}" not found`);
-    return res;
+    console.log(ID);
+    // if (isValidObjectId(ID)) {
+    //   res = await this.postModel
+    //     .findOne({ _id: ID, type: 'ARTICLE' })
+    //     .populate('PostCategory')
+    //     .populate('PostSalesUnit')
+    //     .populate('PostMedia')
+    //     .populate('Money')
+    //     .populate('User');
+    // }
+    // if (!res) throw new NotFoundException(`Id, "${ID}" not found`);
+    // return res;
+    return null;
   }
 
   async findOneSlug(slug: string) {
@@ -170,7 +170,7 @@ export class PostService {
   }
 
   async remove(id: string) {
-    const data = await this.findOne(id);
+    const data = await this.findById(id);
     if (data) {
       if (data.PostMedia.length > 0) {
         data.PostMedia.map(async (item) => {

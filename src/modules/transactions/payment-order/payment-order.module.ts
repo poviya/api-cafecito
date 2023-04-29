@@ -14,6 +14,7 @@ import { MoneyConvertModule } from 'src/modules/moneys/money-convert/money-conve
 import { PostModule } from 'src/modules/posts/post/post.module';
 import { CourseModule } from 'src/modules/courses/course/course.module';
 import { HttpModule } from '@nestjs/axios';
+import { CustomerModule } from 'src/modules/customers/customer/customer.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { HttpModule } from '@nestjs/axios';
     forwardRef(() => MoneyConvertModule),
     forwardRef(() => PostModule),
     forwardRef(() => CourseModule),
+    forwardRef(() => CustomerModule),
   ],
   exports: [MongooseModule],
   providers: [PaymentOrderService, MoneyConvertService],
