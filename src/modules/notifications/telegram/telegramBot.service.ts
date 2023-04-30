@@ -79,11 +79,12 @@ export class TelegramBotService {
   }
 
   async newSaleProduct(post: Posts, paymentOrder: PaymentOrder) {
-    console.log(post);
     const chatId = process.env.TELEGRAM_CHAT_ID;
     const text = `Gracias por su compra ${paymentOrder.Customer.name} ${paymentOrder.Customer.lastname}`;
-    const filePath = `${post.PostMedia[0].url}`;
-    const link = `https://celccar.com/product/${post.slug}`;
+    const filePath = 'https://onlypu.com/assets/logo/logo.png';
+    //const filePath = `${post.PostMedia[0].url}`;
+    const link = `https://celccar.com`;
+    //const link = `https://celccar.com/product/${post.slug}`;
     this.bot.telegram.sendPhoto(chatId, filePath, { caption: text + link });
     //this.bot.telegram.sendMessage(chatId, text);
   }
