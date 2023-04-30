@@ -174,7 +174,7 @@ export const templateConfirmEmailCafecitoEn = (code) => {
       </html>`;
 };
 
-export const templateConfirmPaymentcafecitoEn = (
+export const templateConfirmPaymentCafecitoEn = (
   name: string,
   codeCollection: string,
   date: string,
@@ -210,7 +210,7 @@ export const templateConfirmPaymentcafecitoEn = (
                         <table role="presentation" style="width:100%;text-align:left;">
                             <tr>
                                 <td align="left" style="padding:40px 20px 20px 20px;background:#ffffff;">
-                                    <img src="https://cafecito.com/assets/logo/logo.png" alt="" width="120" style="height:auto;display:block;" />
+                                    <img src="https://celccar.com/assets/logo/icon.png" alt="" width="120" style="height:auto;display:block;" />
                                 </td>
                             </tr>
                             <tr>
@@ -262,7 +262,7 @@ export const templateConfirmPaymentcafecitoEn = (
                                     <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;">
                                         <thead>
                                             <th style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-                                                Ordered products
+                                                Details
                                             </th>
                                         </thead>
                                         <tr>
@@ -333,4 +333,160 @@ export const templateConfirmPaymentcafecitoEn = (
             </table>
         </body>
         </html>`;
+};
+
+export const templateConfirmPaymentCafecitoEs = (
+  name: string,
+  codeCollection: string,
+  date: string,
+  product: string,
+  quantity: number,
+  price: string,
+  total: string,
+) => {
+  return `<!DOCTYPE html>
+          <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width,initial-scale=1">
+              <meta name="x-apple-disable-message-reformatting">
+              <title></title>
+              <!--[if mso]>
+              <noscript>
+                  <xml>
+                      <o:OfficeDocumentSettings>
+                          <o:PixelsPerInch>96</o:PixelsPerInch>
+                      </o:OfficeDocumentSettings>
+                  </xml>
+              </noscript>
+              <![endif]-->
+              <style>
+                  table, td, div, h1, p {font-family: Arial, sans-serif;}
+              </style>
+          </head>
+          <body style="margin:0;padding:0;"> 
+              <table role="presentation" style="width:100%;background:#ffffff;">
+                  <tr>
+                      <td align="center" style="padding:0px;">
+                          <table role="presentation" style="width:100%;text-align:left;">
+                              <tr>
+                                  <td align="left" style="padding:40px 20px 20px 20px;background:#ffffff;">
+                                      <img src="https://celccar.com/assets/logo/icon.png" alt="" width="120" style="height:auto;display:block;" />
+                                  </td>
+                              </tr>
+                              <tr>
+                                  <td style="padding:16px 20px 0px 20px;">
+                                      <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                          <tr>
+                                              <td style="padding:0 0 0px 0;">
+                                                  <h1 style="font-size:24px;margin:0 0 20px 0;font-family:Arial,sans-serif;">Hola ${name}</h1>
+                                                  <p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+                                                    Gracias por su compra.
+                                                  </p>
+                                              </td>
+                                          </tr>
+                                      </table>
+                                  </td>
+                              </tr>
+                              <tr>
+                                  <td style="padding:20px;background:#fff;">
+                                      <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;">
+                                          <thead>
+                                              <th style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+                                                Detalles de la compra
+                                              </th>
+                                          </thead>
+                                          <tr>
+                                              <td style="padding-top:10px;width:50%; display: flex;" align="left">
+                                                  <p style="margin:0;font-size:16px;line-height:16px;font-family:Arial,sans-serif;color:#666; width: 150px;">
+                                                    Número de orden
+                                                  </p>
+                                                  <p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#666;">
+                                                  ${codeCollection}
+                                                  </p>
+                                              </td>
+                                              <td style="padding-top:10px;width:50%; display: flex;" align="left">
+                                                  <p style="margin:0;font-size:16px;line-height:16px;font-family:Arial,sans-serif;color:#666; width: 150px;">
+                                                    Fecha de pago
+                                                  </p>
+                                                  <p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#666;">
+                                                  ${date}
+                                                  </p>
+                                              </td>
+                                          </tr>
+                                      </table>
+                                  </td>
+                              </tr>
+  
+                              <tr>
+                                  <td style="padding:20px;background:#fff;">
+                                      <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;">
+                                          <thead>
+                                              <th style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+                                                Detalles
+                                              </th>
+                                          </thead>
+                                          <tr>
+                                              <td style="padding-top:10px;width:50%; display: flex;" align="left">
+                                                  <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;width: 250px;">
+                                                      Producto
+                                                  </p>
+                                                  
+                                                  <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;width: 100px; text-align: right;">
+                                                      Precio
+                                                  </p>
+                                              </td>
+                                          </tr>
+                                          <tr>
+                                              <td style="padding-top:10px;width:50%; display: flex;" align="left">
+                                                  <p style="margin:0;font-size:16px;line-height:16px;font-family:Arial,sans-serif;color:#666; width: 250px;">
+                                                      ${product}
+                                                  </p>
+                                                  <p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#666; width: 100px;">
+                                                      ${quantity}
+                                                  </p>
+                                                  <p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#666; width: 100px; text-align: right;">
+                                                      ${price}
+                                                  </p>
+                                              </td>
+                                          </tr>
+                                          <tr>
+                                              <td style="padding-top:10px;width:50%; display: flex;" align="left">
+                                                  <p style="margin:0;font-size:20px;line-height:24px;font-family:Arial,sans-serif;color:#666; width: 550px; text-align: right;">
+                                                      TOTAL ${total}
+                                                  </p>
+                                              </td>
+                                          </tr>
+                                      </table>
+                                  </td>
+                              </tr>
+  
+                              <tr>
+                                  <td style="padding:20px;background:#fff;">
+                                      <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;">
+                                          <tr>
+                                              <td style="padding:0;width:50%;" align="left">
+                                                  <p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#666;">
+                                                      &reg; CELCCAR - CARANAVI 2023
+                                                  </p>
+                                              </td>
+                                              <td style="padding:0;width:50%;" align="right">
+                                                  <table role="presentation" style="border-collapse:collapse;border:0;border-spacing:0;">
+                                                      <tr>
+                                                          <td style="padding:0 0 0 10px;width:38px;">
+                                                              <a href="https://www.facebook.com/people/Celccar-Bolivia/100075629360011/" style="color:#666;"><img src="https://assets.codepen.io/210284/fb_1.png" alt="Facebook" width="38" style="height:auto;display:block;border:0;" /></a>
+                                                          </td>
+                                                      </tr>
+                                                  </table>
+                                              </td>
+                                          </tr>
+                                      </table>
+                                  </td>
+                              </tr>
+                          </table>
+                      </td>
+                  </tr>
+              </table>
+          </body>
+          </html>`;
 };

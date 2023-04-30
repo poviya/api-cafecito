@@ -41,7 +41,15 @@ export class PaymentOrder {
   @Prop({ required: false, type: Object }) receipt?: object;
   @Prop({
     required: true,
-    enum: ['PETITION', 'PENDING', 'PAYMENT', 'CANCELED', 'REVERTED', 'ERROR'],
+    enum: [
+      'PETITION',
+      'PENDING',
+      'PAYMENT',
+      'CANCELED',
+      'REVERTED',
+      'DECLINE',
+      'ERROR',
+    ],
     default: 'PETITION',
   })
   status?: string;

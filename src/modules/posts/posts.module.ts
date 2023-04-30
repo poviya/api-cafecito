@@ -11,6 +11,11 @@ import { PostSalesUnitModule } from './post-sales-unit/post-sales-unit.module';
     PostCategoryModule,
     PostSalesUnitModule,
   ],
-  exports: [PostBookmarkModule, PostMediaModule, PostCategoryModule],
+  exports: [
+    PostBookmarkModule,
+    PostMediaModule,
+    PostCategoryModule,
+    PostMediaModule,
+  ],
 })
 export class PostsModule {}

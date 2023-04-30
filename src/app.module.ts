@@ -1,15 +1,12 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 //import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { CountriesModule } from './modules/countries/countries.module';
 import { UsersModule } from './modules/users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { MoneysModule } from './modules/moneys/moneys.module';
 import { PostsModule } from './modules/posts/posts.module';
-import { TelegrafModule } from 'nestjs-telegraf';
-//import { NotificationModule } from './modules/notifications/notifications.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { CommonModule } from './common/common.module';
@@ -18,6 +15,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { NotificationModule } from './modules/notifications/notifications.module';
 
 //import LocalSession from 'telegraf-session-local';
 
@@ -55,13 +53,14 @@ import { CustomersModule } from './modules/customers/customers.module';
     CoursesModule,
     TransactionsModule,
     CustomersModule,
+    NotificationModule,
     //OperacionesModule,
     //ProgramasModule,
 
     // TelegrafModule.forRoot({
     //   //middlewares: [sessions.middleware()],
     //   //token: '5492405324:AAE-l1YGXW-bL5l6Q7dFJcveqoW9vQjtbDg',
-    //   token: '5570627049:AAGqXEv_rGHLAG86SoCYohRBybVk2vLlnlg',
+    //   token: '5926043700:AAEviiKMheXeIH13k9T8NUzII_OvfwqtXVY',
     //   //botName: 'onlypuTestBot',
     // }),
   ],

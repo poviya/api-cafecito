@@ -136,7 +136,7 @@ export class AuthService {
 
     return transporter.sendMail(
       {
-        from: `"Support / Cafecito.com" <${configNodemailer.onlypu.auth.user}>`, // sender address
+        from: `"Support / Cafecito.com" <${configNodemailer.poviya.auth.user}>`, // sender address
         to: `${user.email}`, // list of receivers
         subject: 'Confirm mail', // Subject line ES, EN
         html: templateConfirmEmailCafecitoEn(user.codeVerified), // html body

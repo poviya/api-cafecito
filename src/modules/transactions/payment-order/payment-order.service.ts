@@ -15,6 +15,12 @@ import axios from 'axios';
 
 import { map } from 'rxjs';
 import { CustomerService } from 'src/modules/customers/customer/customer.service';
+import {
+  configNodemailer,
+  templateConfirmPaymentCafecitoEs,
+  transporterNodemailerOnlypu,
+} from 'src/common/constants';
+import { TelegramBotService } from 'src/modules/notifications/telegram/telegramBot.service';
 
 @Injectable()
 export class PaymentOrderService {
@@ -22,9 +28,11 @@ export class PaymentOrderService {
     @InjectModel(PaymentOrder.name)
     private readonly paymentOrderModel: Model<PaymentOrder>,
     @InjectModel(Posts.name)
-    private readonly postService: PostService,
+    private readonly postModel: Model<Posts>,
+    public postService: PostService,
     private readonly httpService: HttpService,
     private readonly customerService: CustomerService,
+    private readonly telegramBotService: TelegramBotService,
   ) {}
 
   async createProduct(dataDto: CreateProductPaymentOrderDto) {
@@ -56,8 +64,8 @@ export class PaymentOrderService {
         money: resPost.Money.iso,
         codeCollection: data.codeCollection,
       };
-      // const url = 'http://192.168.43.253:5000/api/payment-order/checkout';
-      const url = 'https://api.poviya.com/api/payment-order/checkout';
+      const url = 'http://192.168.43.253:5000/api/payment-order/checkout';
+      //const url = 'https://api.poviya.com/api/payment-order/checkout';
       const resProcessor = await this.httpService
         .post(url, dataCallback)
         .pipe(map((response) => response.data))
@@ -69,7 +77,7 @@ export class PaymentOrderService {
         return false;
       }
     } catch (error) {
-      this.handleDBExceptions(error);
+      //this.handleDBExceptions(error);
     }
   }
 
@@ -100,7 +108,6 @@ export class PaymentOrderService {
 
   async transaction(dataDto: any): Promise<any> {
     try {
-      console.log(dataDto);
       let resPaymentOrder: any;
       const res = await this.findOneCodeCollection(
         dataDto.receipt.req_reference_number,
@@ -112,41 +119,50 @@ export class PaymentOrderService {
           message: 'No existe codigo de recaudacion',
         };
       }
+      // create customer
+      const dataCustomer = {
+        name: dataDto.customer.name,
+        lastname: dataDto.customer.lastname,
+        email: dataDto.customer.email,
+        phone: dataDto.customer.phone,
+        address: dataDto.customer.address,
+        city: dataDto.customer.city,
+        state: dataDto.customer.state,
+        country: dataDto.customer.country,
+        postalCode: dataDto.customer.postalCode,
+      };
+      const resCustomer = await this.customerService.create(dataCustomer);
 
       if (dataDto.receipt.decision == 'ACCEPT') {
-        const dataCustomer = {
-          name: res.Customer.name,
-          lastname: res.Customer.lastname,
-          email: res.Customer.email,
-          phone: res.Customer.phone,
-          address: res.Customer.address,
-          city: res.Customer.city,
-          state: res.Customer.state,
-          country: res.Customer.country,
-          postalCode: res.Customer.postalCode,
-        };
-        const resCustomer = await this.customerService.create(dataCustomer);
         const datosDTOPaymentOrder = {
           status: 'PAYMENT',
           Customer: resCustomer._id,
           receipt: dataDto.receipt,
         };
 
-        resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
-          { _id: res._id },
-          datosDTOPaymentOrder,
-          {
+        resPaymentOrder = await this.paymentOrderModel
+          .findOneAndUpdate({ _id: res._id }, datosDTOPaymentOrder, {
             new: true,
-          },
+          })
+          .populate('Customer');
+
+        // send telegram
+        this.telegramBotService.newSaleProduct(
+          res.paymentDetails['Post'],
+          resPaymentOrder,
         );
+        // send email
+        const product = `Compra de ${res.paymentDetails['Post']['title']}`;
+        this.sendConfirmEmail(res, product);
       } else {
         const datosDTOPaymentOrder = {
-          status: 'ERROR',
+          status: dataDto.receipt.decision,
+          Customer: resCustomer._id,
           receipt: dataDto.receipt,
         };
 
         resPaymentOrder = await this.paymentOrderModel.findOneAndUpdate(
-          { _id: dataDto.dataPaymentOder._id },
+          { _id: res._id },
           datosDTOPaymentOrder,
           {
             new: true,
@@ -278,6 +294,40 @@ export class PaymentOrderService {
     console.log(error);
     throw new InternalServerErrorException(
       'Unexpected error, check server logs',
+    );
+  }
+
+  //+++++++++++++++SEND EMAIL
+  async sendConfirmEmail(paymentOrder: PaymentOrder, product) {
+    //const testAccount = await this.nodemailer.createTestAccount();
+    console.log(paymentOrder);
+    // create reusable transporter object using the default SMTP transport
+    const transporter = transporterNodemailerOnlypu();
+    const date = new Date();
+    return transporter.sendMail(
+      {
+        from: `"Pago / Celccar.com" <${configNodemailer.poviya.auth.user}>`, // sender address
+        to: `${paymentOrder.Customer.email}`, // list of receivers
+        subject: 'Celccar Billete Electrónico', // Subject line ES, EN
+        html: templateConfirmPaymentCafecitoEs(
+          `${paymentOrder.Customer?.name} ${paymentOrder.Customer?.lastname}`,
+          paymentOrder.codeCollection,
+          date.toLocaleDateString('en-US'),
+          product,
+          paymentOrder.quantity,
+          `${paymentOrder.Money.iso} ${paymentOrder.amount}`,
+          `${paymentOrder.Money.iso} ${paymentOrder.amountBalance}`,
+        ), // html body
+      },
+      (error) => {
+        if (error) {
+          console.log('email no enviado');
+          return false; //response.status(500).send(error.message);
+        } else {
+          console.log('Enviado');
+          return true;
+        }
+      },
     );
   }
 }

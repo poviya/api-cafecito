@@ -141,19 +141,17 @@ export class PostService {
 
   async findById(ID: string) {
     let res: any;
-    console.log(ID);
-    // if (isValidObjectId(ID)) {
-    //   res = await this.postModel
-    //     .findOne({ _id: ID, type: 'ARTICLE' })
-    //     .populate('PostCategory')
-    //     .populate('PostSalesUnit')
-    //     .populate('PostMedia')
-    //     .populate('Money')
-    //     .populate('User');
-    // }
-    // if (!res) throw new NotFoundException(`Id, "${ID}" not found`);
-    // return res;
-    return null;
+    if (isValidObjectId(ID)) {
+      res = await this.postModel
+        .findOne({ _id: ID, type: 'ARTICLE' })
+        .populate('PostCategory')
+        .populate('PostSalesUnit')
+        .populate('PostMedia')
+        .populate('Money')
+        .populate('User');
+    }
+    if (!res) throw new NotFoundException(`Id, "${ID}" not found`);
+    return res;
   }
 
   async findOneSlug(slug: string) {

@@ -15,7 +15,6 @@ import { PostCategoryModule } from '../post-category/post-category.module';
     forwardRef(() => PostMediaModule),
     forwardRef(() => PostCategoryModule),
     forwardRef(() => UserModule),
-    forwardRef(() => UserModule),
   ],
   exports: [MongooseModule, PostService],
 })

@@ -15,6 +15,7 @@ import { PostModule } from 'src/modules/posts/post/post.module';
 import { CourseModule } from 'src/modules/courses/course/course.module';
 import { HttpModule } from '@nestjs/axios';
 import { CustomerModule } from 'src/modules/customers/customer/customer.module';
+import { TelegramBotService } from 'src/modules/notifications/telegram/telegramBot.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { CustomerModule } from 'src/modules/customers/customer/customer.module';
     forwardRef(() => CustomerModule),
   ],
   exports: [MongooseModule],
-  providers: [PaymentOrderService, MoneyConvertService],
+  providers: [PaymentOrderService, MoneyConvertService, TelegramBotService],
   controllers: [PaymentOrderController],
 })
 export class PaymentOrderModule {}

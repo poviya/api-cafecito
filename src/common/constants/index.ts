@@ -6,4 +6,6 @@ export {
 export {
   templateConfirmEmailCafecitoEs,
   templateConfirmEmailCafecitoEn,
+  templateConfirmPaymentCafecitoEn,
+  templateConfirmPaymentCafecitoEs,
 } from './templateEmail';

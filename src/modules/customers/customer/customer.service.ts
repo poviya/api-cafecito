@@ -16,8 +16,13 @@ export class CustomerService {
 
   async create(dataDto: CreateCustomerDto) {
     try {
-      const res = await this.countryModel.create(dataDto);
-      return res;
+      const resFindOneEmail = await this.findOneEmail(dataDto.email);
+      if (!resFindOneEmail) {
+        const res = await this.countryModel.create(dataDto);
+        return res;
+      } else {
+        return resFindOneEmail;
+      }
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -25,6 +30,11 @@ export class CustomerService {
 
   findAll() {
     return `This action returns all customer`;
+  }
+
+  async findOneEmail(email: string) {
+    const res = await this.countryModel.findOne({ email: email });
+    return res;
   }
 
   findOne(id: number) {
