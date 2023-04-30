@@ -4,19 +4,17 @@ import { Money } from 'src/modules/moneys/money/entities/money.entity';
 
 @Schema({ collection: 'courses', timestamps: true })
 export class Course {
-  @Prop({ unique: true, trim: true }) slug: string;
-  @Prop({ unique: true, trim: true }) code: string;
-  @Prop() title: string;
-  @Prop() description: string;
-  @Prop({ type: Object }) content: object;
-  @Prop() duration: string;
-  @Prop() frequency: string;
-  @Prop() schedule: string;
-  @Prop() address: string;
+  @Prop({ unique: true, trim: true }) slug?: string;
+  @Prop({ unique: true, trim: true }) code?: string;
+  @Prop() title?: string;
+  @Prop() description?: string;
+  @Prop({ type: Object }) content?: object;
+  @Prop() startDate?: string;
+  @Prop() duration?: string;
+  @Prop() schedule?: string;
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Money.name })
   Money?: Money;
-  @Prop() price: string;
-  @Prop({ type: Object }) includes: object;
+  @Prop() price?: string;
   // CONTROL
   @Prop() active: boolean;
   @Prop() edit: boolean;
