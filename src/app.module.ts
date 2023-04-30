@@ -53,7 +53,7 @@ import { NotificationModule } from './modules/notifications/notifications.module
     CoursesModule,
     TransactionsModule,
     CustomersModule,
-    NotificationModule,
+    //NotificationModule,
     //OperacionesModule,
     //ProgramasModule,
 

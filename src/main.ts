@@ -16,8 +16,8 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  //const telegramBotService = app.get(TelegramBotService);
-  //telegramBotService.getBot();
+  const telegramBotService = app.get(TelegramBotService);
+  telegramBotService.getBot();
   const config = new DocumentBuilder()
     .setTitle('Api CAFECITO')
     .setDescription('Procedimientos para usar esta API')
