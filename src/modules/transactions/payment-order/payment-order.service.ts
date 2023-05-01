@@ -47,7 +47,7 @@ export class PaymentOrderService {
           Number(resPost.price) * Number(dataDto.quantity) -
           Number(dataDto.amountDiscount),
         amountDiscount: dataDto.amountDiscount,
-        production: dataDto.production,
+        production: process.env.POVIYA_PRODUCTION == 'true' ? true : false,
         paymentMethod: 'CARD',
         paymentType: 'SALE_PRODUCT',
         paymentDetails: {
@@ -59,12 +59,14 @@ export class PaymentOrderService {
         poviyaCommerceId: process.env.POVIYA_COMMERCE_ID,
         poviyaUrlCallback: process.env.POVIYA_URL_CALLBACK,
         poviyaUrlReturn: process.env.POVIYA_URL_RETURN,
-        proviyaProduction: !!process.env.POVIYA_PRODUCTION,
+        proviyaProduction:
+          process.env.POVIYA_PRODUCTION == 'true' ? true : false,
         amount: Number(data.amountBalance),
         money: resPost.Money.iso,
         codeCollection: data.codeCollection,
       };
-      const url = 'http://192.168.43.253:5000/api/payment-order/checkout';
+      console.log(dataCallback);
+      const url = process.env.POVIYA_URL_CHECKOUT;
       //const url = 'https://api.poviya.com/api/payment-order/checkout';
       const resProcessor = await this.httpService
         .post(url, dataCallback)
@@ -145,15 +147,6 @@ export class PaymentOrderService {
             new: true,
           })
           .populate('Customer');
-
-        // send telegram
-        this.telegramBotService.newSaleProduct(
-          res.paymentDetails['Post'],
-          resPaymentOrder,
-        );
-        // send email
-        const product = `Compra de ${res.paymentDetails['Post']['title']}`;
-        this.sendConfirmEmail(res, product);
       } else {
         const datosDTOPaymentOrder = {
           status: dataDto.receipt.decision,
@@ -189,6 +182,22 @@ export class PaymentOrderService {
       .populate('Money')
       .populate('Customer')
       .exec();
+    return res;
+  }
+
+  async notification(codeCollection: string): Promise<PaymentOrder> {
+    const res = await this.paymentOrderModel
+      .findOne({
+        codeCollection: codeCollection,
+      })
+      .populate('Money')
+      .populate('Customer')
+      .exec();
+    // send telegram
+    this.telegramBotService.newSaleProduct(res.paymentDetails['Post'], res);
+    // send email
+    const product = `Compra de ${res.paymentDetails['Post']['title']}`;
+    await this.sendConfirmEmail(res, product);
     return res;
   }
 
@@ -299,35 +308,37 @@ export class PaymentOrderService {
 
   //+++++++++++++++SEND EMAIL
   async sendConfirmEmail(paymentOrder: PaymentOrder, product) {
-    //const testAccount = await this.nodemailer.createTestAccount();
-    console.log(paymentOrder);
-    // create reusable transporter object using the default SMTP transport
-    const transporter = transporterNodemailerOnlypu();
-    const date = new Date();
-    return transporter.sendMail(
-      {
-        from: `"Pago / Celccar.com" <${configNodemailer.poviya.auth.user}>`, // sender address
-        to: `${paymentOrder.Customer.email}`, // list of receivers
-        subject: 'Celccar Billete Electrónico', // Subject line ES, EN
-        html: templateConfirmPaymentCafecitoEs(
-          `${paymentOrder.Customer?.name} ${paymentOrder.Customer?.lastname}`,
-          paymentOrder.codeCollection,
-          date.toLocaleDateString('en-US'),
-          product,
-          paymentOrder.quantity,
-          `${paymentOrder.Money.iso} ${paymentOrder.amount}`,
-          `${paymentOrder.Money.iso} ${paymentOrder.amountBalance}`,
-        ), // html body
-      },
-      (error) => {
-        if (error) {
-          console.log('email no enviado');
-          return false; //response.status(500).send(error.message);
-        } else {
-          console.log('Enviado');
-          return true;
-        }
-      },
-    );
+    try {
+      //const testAccount = await this.nodemailer.createTestAccount();
+      console.log(paymentOrder);
+      // create reusable transporter object using the default SMTP transport
+      const transporter = transporterNodemailerOnlypu();
+      const date = new Date();
+      return transporter.sendMail(
+        {
+          from: `"Pago / Celccar.com" <${configNodemailer.poviya.auth.user}>`, // sender address
+          to: `${paymentOrder.Customer.email}`, // list of receivers
+          subject: 'Celccar Billete Electrónico', // Subject line ES, EN
+          html: templateConfirmPaymentCafecitoEs(
+            `${paymentOrder.Customer?.name} ${paymentOrder.Customer?.lastname}`,
+            paymentOrder.codeCollection,
+            date.toLocaleDateString('en-US'),
+            product,
+            paymentOrder.quantity,
+            `${paymentOrder.Money.iso} ${paymentOrder.amount}`,
+            `${paymentOrder.Money.iso} ${paymentOrder.amountBalance}`,
+          ), // html body
+        },
+        (error) => {
+          if (error) {
+            console.log('email no enviado');
+            return false; //response.status(500).send(error.message);
+          } else {
+            console.log('Enviado');
+            return true;
+          }
+        },
+      );
+    } catch (error) {}
   }
 }

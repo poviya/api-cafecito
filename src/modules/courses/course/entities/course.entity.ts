@@ -9,6 +9,9 @@ export class Course {
   @Prop() title?: string;
   @Prop() description?: string;
   @Prop({ type: Object }) content?: object;
+  @Prop({ type: Object }) purposes?: object;
+  @Prop({ type: Object }) benefits?: object;
+  @Prop({ type: Object }) whoIsItFor?: object;
   @Prop() startDate?: string;
   @Prop() duration?: string;
   @Prop() schedule?: string;

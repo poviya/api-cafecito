@@ -62,6 +62,16 @@ export class PaymentOrderController {
     return this.paymentOrderService.findById(id);
   }
 
+  @Get('codeCollection/:id')
+  async findOneCodeCollection(@Param('id') id: string): Promise<PaymentOrder> {
+    return this.paymentOrderService.findOneCodeCollection(id);
+  }
+
+  @Get('notification/:id')
+  async notification(@Param('id') id: string): Promise<PaymentOrder> {
+    return this.paymentOrderService.notification(id);
+  }
+
   @Delete(':id')
   async delete(@Param('id', ParseMongoIdPipe) id: string) {
     return this.paymentOrderService.remove(id);

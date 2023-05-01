@@ -11,18 +11,42 @@ import { Model } from 'mongoose';
 @Injectable()
 export class CustomerService {
   constructor(
-    @InjectModel(Customer.name) private readonly countryModel: Model<Customer>,
+    @InjectModel(Customer.name) private readonly customerModel: Model<Customer>,
   ) {}
 
   async create(dataDto: CreateCustomerDto) {
     try {
       const resFindOneEmail = await this.findOneEmail(dataDto.email);
       if (!resFindOneEmail) {
-        const res = await this.countryModel.create(dataDto);
+        const res = await this.customerModel.create(dataDto);
         return res;
       } else {
-        return resFindOneEmail;
+        const resUpdate = await this.customerModel.findOneAndUpdate(
+          { _id: resFindOneEmail._id },
+          dataDto,
+          {
+            new: true,
+          },
+        );
+        return resUpdate;
       }
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
+
+  async update(id: string, dataDto: any): Promise<any> {
+    this.findOne(id);
+
+    try {
+      const res = await this.customerModel.findOneAndUpdate(
+        { _id: id },
+        dataDto,
+        {
+          new: true,
+        },
+      );
+      return res;
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -33,16 +57,12 @@ export class CustomerService {
   }
 
   async findOneEmail(email: string) {
-    const res = await this.countryModel.findOne({ email: email });
+    const res = await this.customerModel.findOne({ email: email });
     return res;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} customer`;
-  }
-
-  update(id: number, updateCustomerDto: UpdateCustomerDto) {
-    return `This action updates a #${id} customer`;
   }
 
   remove(id: number) {

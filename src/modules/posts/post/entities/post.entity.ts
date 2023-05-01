@@ -10,6 +10,8 @@ import { PostSalesUnit } from '../../post-sales-unit/entities/post-sales-unit.en
 export class Posts {
   /***************************************************** GLOBAL */
 
+  _id?: string;
+
   @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: PostMedia.name }],
   })

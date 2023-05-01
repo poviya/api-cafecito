@@ -4,12 +4,16 @@ import { HttpService } from '@nestjs/axios';
 import { map } from 'rxjs';
 import { Posts } from 'src/modules/posts/post/entities/post.entity';
 import { PaymentOrder } from 'src/modules/transactions/payment-order/entities/payment-order.entity';
+import { PostService } from 'src/modules/posts/post/post.service';
 
 @Injectable()
 export class TelegramBotService {
   bot: Telegraf;
 
-  constructor(private readonly httpService: HttpService) {
+  constructor(
+    private readonly httpService: HttpService,
+    public postService: PostService,
+  ) {
     this.bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
     // const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN); // <-- place your bot token in this string
@@ -79,13 +83,17 @@ export class TelegramBotService {
   }
 
   async newSaleProduct(post: Posts, paymentOrder: PaymentOrder) {
+    const resPost = await this.postService.findById(post._id);
+    console.log('postMedia', resPost);
     const chatId = process.env.TELEGRAM_CHAT_ID;
     const text = `Gracias por su compra ${paymentOrder.Customer.name} ${paymentOrder.Customer.lastname}`;
-    const filePath = 'https://onlypu.com/assets/logo/logo.png';
-    //const filePath = `${post.PostMedia[0].url}`;
-    const link = `https://celccar.com`;
-    //const link = `https://celccar.com/product/${post.slug}`;
-    this.bot.telegram.sendPhoto(chatId, filePath, { caption: text + link });
+    //const filePath = 'https://onlypu.com/assets/logo/logo.png';
+    const filePath = `${resPost.PostMedia[0].url}`;
+    //const link = `https://celccar.com`;
+    const link = `https://celccar.com/product/${post.slug}`;
+    this.bot.telegram.sendPhoto(chatId, filePath, {
+      caption: text + ' ' + link,
+    });
     //this.bot.telegram.sendMessage(chatId, text);
   }
   async send() {

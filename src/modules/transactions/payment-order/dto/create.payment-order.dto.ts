@@ -1,4 +1,4 @@
-import { IsBoolean, IsMongoId, IsNumber } from 'class-validator';
+import { IsMongoId, IsNumber } from 'class-validator';
 
 export class CreateProductPaymentOrderDto {
   @IsMongoId()
@@ -9,7 +9,4 @@ export class CreateProductPaymentOrderDto {
 
   @IsNumber()
   amountDiscount: number;
-
-  @IsBoolean()
-  production: boolean;
 }
