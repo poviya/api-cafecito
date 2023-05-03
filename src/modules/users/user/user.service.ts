@@ -11,20 +11,30 @@ import { v4 as uuid } from 'uuid';
 import { isValidObjectId, Model } from 'mongoose';
 import { EmailDto, SlugDto, UsernameDto } from './dto/user.dto';
 import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
+import { PostMedia } from 'src/modules/posts/post-media/entities/post-media.entity';
+import { CloudflareService } from 'src/modules/posts/post-media/s3/cloudflareService';
+import { PostMediaService } from 'src/modules/posts/post-media/post-media.service';
 
 @Injectable()
 export class UserService {
-  // para manejar errores
+  FOLDER = 'onlypu/user';
   private readonly logger = new Logger('UserService');
 
-  // CONSTRUCTOR si
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+
+    @InjectModel(PostMedia.name)
+    private postMediaModel: Model<PostMedia>,
+
+    private readonly cloudflareService: CloudflareService,
+    private readonly postMediaService: PostMediaService,
+  ) {}
 
   // CREAR
-  async create(dataDTO: any): Promise<User> {
+  async create(dataDto: any): Promise<User> {
     try {
-      dataDTO.username = await this.generateSlug();
-      const res = await this.userModel.create(dataDTO);
+      dataDto.username = await this.generateSlug();
+      const res = await this.userModel.create(dataDto);
       return res;
     } catch (error) {
       this.handleDBExceptions(error);
@@ -66,14 +76,14 @@ export class UserService {
   }
 
   // EDITAR
-  async update(ID: string, dataDTO: any) {
+  async update(ID: string, dataDto: any) {
     const data = await this.findOne(ID);
 
     try {
-      await data.updateOne(dataDTO);
+      await data.updateOne(dataDto);
       return {
         ...data.toJSON(),
-        ...dataDTO,
+        ...dataDto,
       };
     } catch (error) {
       this.handleDBExceptions(error);
@@ -261,12 +271,12 @@ export class UserService {
   }
 
   // USUARIOS DISTINTO AL ACTUAL
-  async getAllUsersDistinctCurrent(dataDTO: any, paginationDto): Promise<any> {
+  async getAllUsersDistinctCurrent(dataDto: any, paginationDto): Promise<any> {
     const { limit = 10, offset = 0 } = paginationDto;
     const res = await this.userModel
       .find({
-        Site: dataDTO.Site,
-        _id: { $ne: dataDTO.User._id },
+        Site: dataDto.Site,
+        _id: { $ne: dataDto.User._id },
       })
       .populate('Cover')
       .populate('Profile')
@@ -354,12 +364,85 @@ export class UserService {
     return true;
   }
 
-  async doestEmailExists(dataDTO: User): Promise<any> {
-    const user = await this.userModel.findOne({ email: dataDTO.email });
+  async doestEmailExists(dataDto: User): Promise<any> {
+    const user = await this.userModel.findOne({ email: dataDto.email });
     if (user) {
       return true;
     }
     return false;
+  }
+
+  async createCover(dataDto: any, files, user: AuthUserDto): Promise<any> {
+    let resUpdate: any;
+    try {
+      if (user.Cover) {
+        for (const item of user.Cover) {
+          this.postMediaService.deleteCover(item);
+        }
+      }
+      for (const file of files) {
+        const response = await this.cloudflareService.uploadFile(
+          file,
+          this.FOLDER,
+        );
+        const dataImage = {
+          User: user._id,
+          category: 'PROFILE',
+          key: response.Key,
+          url: response.Location,
+          type: file.mimetype.split('/')[0],
+          extension: file.mimetype.split('/')[1],
+        };
+        const res = await this.postMediaModel.create(dataImage);
+        const postMedia = { $push: { Cover: res.id } };
+        resUpdate = this.userModel
+          .findOneAndUpdate({ _id: user._id }, postMedia, {
+            new: true,
+          })
+          .populate('Cover')
+          .populate('Profile');
+      }
+
+      return resUpdate;
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
+
+  async createProfile(dataDTO: any, files, user: AuthUserDto): Promise<any> {
+    let resUpdate: any;
+    try {
+      if (user.Profile) {
+        for (const item of user.Profile) {
+          this.postMediaService.deleteProfile(item);
+        }
+      }
+      for (const file of files) {
+        const response = await this.cloudflareService.uploadFile(
+          file,
+          this.FOLDER,
+        );
+        const dataImage = {
+          User: user._id,
+          category: 'PROFILE',
+          key: response.Key,
+          url: response.Location,
+          type: file.mimetype.split('/')[0],
+          extension: file.mimetype.split('/')[1],
+        };
+        const res = await this.postMediaModel.create(dataImage);
+        const postMedia = { $push: { Profile: res.id } };
+        resUpdate = await this.userModel
+          .findOneAndUpdate({ _id: user._id }, postMedia, {
+            new: true,
+          })
+          .populate('Cover')
+          .populate('Profile');
+      }
+      return resUpdate;
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   async doestUsernameExists(dataDto: any): Promise<any> {

@@ -23,7 +23,10 @@ export class AuthUserDto {
   Site: string;
 
   @IsObject()
-  Profile: object;
+  Profile: any;
+
+  @IsObject()
+  Cover: any;
 }
 
 export class EmailVerifiedDto {

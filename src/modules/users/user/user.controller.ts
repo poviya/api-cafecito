@@ -42,20 +42,16 @@ export class UserController {
     }),
   )
   async createCover(
-    @Res() res: any,
-    @Body() dataDTO: any,
+    @Body() dataDto: any,
     @UploadedFiles() files: Array<Express.Multer.File>,
     @CurrentUser() user: any,
   ) {
     if (!files) {
       throw new BadRequestException('Make sure that the file is an image');
     }
-    const createDto = JSON.parse(dataDTO.data);
-    createDto.User = await user;
-    const object = this.postMediaService.createCover(createDto, files);
-
-    //const object = dataDTO;
-    return res.status(HttpStatus.OK).json(object);
+    const createDto = JSON.parse(dataDto.data);
+    const res = this.userServicie.createCover(createDto, files, user);
+    return res;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -66,20 +62,16 @@ export class UserController {
     }),
   )
   async createProfile(
-    @Res() res: any,
-    @Body() dataDTO: any,
+    @Body() dataDto: any,
     @UploadedFiles() files: Array<Express.Multer.File>,
     @CurrentUser() user: any,
   ) {
     if (!files) {
       throw new BadRequestException('Make sure that the file is an image');
     }
-    const createDto = JSON.parse(dataDTO.data);
-    createDto.User = await user;
-    const object = this.postMediaService.createProfile(createDto, files);
-
-    //const object = dataDTO;
-    return res.status(HttpStatus.OK).json(object);
+    const createDto = JSON.parse(dataDto.data);
+    const res = this.userServicie.createProfile(createDto, files, user);
+    return res;
   }
 
   @UseGuards(JwtAuthGuard)

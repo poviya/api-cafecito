@@ -16,6 +16,8 @@ import { CurrentUser } from 'src/modules/auth/current-user.decorator';
 import { PaymentOrder } from './entities/payment-order.entity';
 import { PaymentOrderService } from './payment-order.service';
 import { CreateProductPaymentOrderDto } from './dto/index.dto';
+import { JwtAuthGuard } from 'src/modules/auth/jwt-auth.guard';
+import { AuthUserDto } from 'src/modules/auth/dto/authUser.dto';
 
 @Controller('payment-order')
 export class PaymentOrderController {
@@ -75,5 +77,11 @@ export class PaymentOrderController {
   @Delete(':id')
   async delete(@Param('id', ParseMongoIdPipe) id: string) {
     return this.paymentOrderService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('find-all-payments')
+  async findAllPayment(@CurrentUser() user: AuthUserDto) {
+    return this.paymentOrderService.findAllPayments();
   }
 }

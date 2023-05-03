@@ -13,7 +13,7 @@ export class Posts {
   _id?: string;
 
   @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: PostMedia.name }],
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'PostMedia' }],
   })
   PostMedia?: PostMedia[];
 

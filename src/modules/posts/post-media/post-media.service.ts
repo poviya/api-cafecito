@@ -11,7 +11,6 @@ import { Posts } from '../post/entities/post.entity';
 import { PostMedia } from './entities/post-media.entity';
 import { v4 as uuid } from 'uuid';
 import { User } from 'src/modules/users/user/entities/user.entity';
-import { AmazonStorageService } from 'src/modules/posts/post-media/s3/amazonStorageService';
 import { UtilsMediaService } from './utils/snapshot';
 import { CloudflareService } from './s3/cloudflareService';
 
@@ -32,7 +31,7 @@ export class PostMediaService {
     private postMediaModel: Model<PostMedia>,
     @InjectModel(Posts.name) private postModel: Model<Posts>,
     @InjectModel(User.name) private userModel: Model<User>,
-    private readonly amazonStorageService: AmazonStorageService,
+    //private readonly cloudflareService: AmazonStorageService,
     private readonly cloudflareService: CloudflareService,
     private readonly utilsMediaService: UtilsMediaService,
   ) {}
@@ -76,7 +75,7 @@ export class PostMediaService {
       //console.log(item);
     }
     for (const file of files) {
-      const response = await this.amazonStorageService.uploadFile(
+      const response = await this.cloudflareService.uploadFile(
         file,
         this.FOLDER,
       );
@@ -107,7 +106,7 @@ export class PostMediaService {
       // console.log(item);
     }
     for (const file of files) {
-      const response = await this.amazonStorageService.uploadFile(
+      const response = await this.cloudflareService.uploadFile(
         file,
         this.FOLDER,
       );
@@ -147,7 +146,7 @@ export class PostMediaService {
         }
       }
       for (const file of files) {
-        const response = await this.amazonStorageService.uploadFile(
+        const response = await this.cloudflareService.uploadFile(
           file,
           this.FOLDER,
         );
@@ -216,29 +215,32 @@ export class PostMediaService {
     }
   }
 
-  async deleteCover(dataDTO: any): Promise<any> {
+  async deleteCover(dataDto: any): Promise<any> {
     try {
-      const data = await this.findOne(dataDTO._id);
+      const data = await this.findOne(dataDto._id);
       if (data) {
         const PostMedia = {
-          $pull: { Cover: dataDTO._id },
+          $pull: { Cover: dataDto._id },
         };
-        const res = await this.userModel.updateOne(
-          {
-            _id: dataDTO.User,
-            Cover: dataDTO._id,
-          },
-          PostMedia,
-          {
-            new: true,
-          },
-        );
+        const res = await this.userModel
+          .findOneAndUpdate(
+            {
+              _id: dataDto.User,
+              Cover: dataDto._id,
+            },
+            PostMedia,
+            {
+              new: true,
+            },
+          )
+          .populate('Cover')
+          .populate('Profile');
 
         const resDelete = await this.postMediaModel.findByIdAndDelete(
-          dataDTO._id,
+          dataDto._id,
         );
         if (resDelete.key) {
-          this.amazonStorageService.s3Delete(dataDTO.key);
+          this.cloudflareService.s3Delete(dataDto.key);
         }
         return res;
       }
@@ -247,30 +249,33 @@ export class PostMediaService {
     }
   }
 
-  async deleteProfile(dataDTO: any): Promise<any> {
+  async deleteProfile(dataDto: any): Promise<any> {
     try {
-      const data = await this.findOne(dataDTO._id);
+      const data = await this.findOne(dataDto._id);
       if (data) {
         const PostMedia = {
-          $pull: { Profile: dataDTO._id },
+          $pull: { Profile: dataDto._id },
         };
-        const res = await this.userModel.updateOne(
-          {
-            _id: dataDTO.User,
-            Profile: dataDTO._id,
-          },
-          PostMedia,
-          {
-            new: true,
-          },
-        );
+        const res = await this.userModel
+          .findOneAndUpdate(
+            {
+              _id: dataDto.User,
+              Profile: dataDto._id,
+            },
+            PostMedia,
+            {
+              new: true,
+            },
+          )
+          .populate('Cover')
+          .populate('Profile');
 
         const resDelete = await this.postMediaModel.findByIdAndDelete(
-          dataDTO._id,
+          dataDto._id,
         );
         if (resDelete) {
           if (resDelete.key) {
-            this.amazonStorageService.s3Delete(dataDTO.key);
+            this.cloudflareService.s3Delete(dataDto.key);
           }
         }
         return res;

@@ -21,6 +21,7 @@ import {
   transporterNodemailerOnlypu,
 } from 'src/common/constants';
 import { TelegramBotService } from 'src/modules/notifications/telegram/telegramBot.service';
+import { CourseService } from 'src/modules/courses/course/course.service';
 
 @Injectable()
 export class PaymentOrderService {
@@ -29,7 +30,8 @@ export class PaymentOrderService {
     private readonly paymentOrderModel: Model<PaymentOrder>,
     @InjectModel(Posts.name)
     private readonly postModel: Model<Posts>,
-    public postService: PostService,
+    private postService: PostService,
+    private courseService: CourseService,
     private readonly httpService: HttpService,
     private readonly customerService: CustomerService,
     private readonly telegramBotService: TelegramBotService,
@@ -67,7 +69,6 @@ export class PaymentOrderService {
       };
       console.log(dataCallback);
       const url = process.env.POVIYA_URL_CHECKOUT;
-      //const url = 'https://api.poviya.com/api/payment-order/checkout';
       const resProcessor = await this.httpService
         .post(url, dataCallback)
         .pipe(map((response) => response.data))
@@ -84,17 +85,50 @@ export class PaymentOrderService {
   }
 
   async createCourse(dataDto: any): Promise<any> {
-    const data = {
-      Course: dataDto.Course,
-      codeCollection: dataDto.codeCollection,
-      amount: dataDto.amount,
-      Money: dataDto.Money,
-      amountBalance: dataDto.price,
-      amountDiscount: dataDto.amountDiscount,
-      production: dataDto.production,
-    };
-    const resCreate = await this.paymentOrderModel.create(data);
-    return resCreate;
+    try {
+      const resCourse = await this.courseService.findById(dataDto.Post);
+      const data = {
+        codeCollection: `CE${this.generateCodePayment()}`,
+        amount: resCourse.price,
+        Money: resCourse.Money,
+        quantity: dataDto.quantity,
+        amountBalance:
+          Number(resCourse.price) * Number(dataDto.quantity) -
+          Number(dataDto.amountDiscount),
+        amountDiscount: dataDto.amountDiscount,
+        production: process.env.POVIYA_PRODUCTION == 'true' ? true : false,
+        paymentMethod: 'CARD',
+        paymentType: 'SALE_COURSE',
+        paymentDetails: {
+          Post: resCourse,
+        },
+      };
+
+      const dataCallback = {
+        poviyaCommerceId: process.env.POVIYA_COMMERCE_ID,
+        poviyaUrlCallback: process.env.POVIYA_URL_CALLBACK,
+        poviyaUrlReturn: process.env.POVIYA_URL_RETURN,
+        proviyaProduction:
+          process.env.POVIYA_PRODUCTION == 'true' ? true : false,
+        amount: Number(data.amountBalance),
+        money: resCourse.Money.iso,
+        codeCollection: data.codeCollection,
+      };
+      console.log(dataCallback);
+      const url = process.env.POVIYA_URL_CHECKOUT;
+      const resProcessor = await this.httpService
+        .post(url, dataCallback)
+        .pipe(map((response) => response.data))
+        .toPromise();
+      if (resProcessor.ok == true) {
+        const resCreate = await this.paymentOrderModel.create(data);
+        return resCreate;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      //this.handleDBExceptions(error);
+    }
   }
 
   async updateOne(codeCollection: string, datosDTO: any): Promise<any> {
@@ -231,30 +265,26 @@ export class PaymentOrderService {
     return res;
   }
 
-  sumDaysToDate(days: number, date) {
-    /*
-        var x = new Date();
-        var y = new Date();
-
-        console.log(new Date());
-        var m = x.setDate(x.getDate() +days);
-        var n = y.setDate(y.getDate() + 6);
-        console.log(new Date(m));
-        console.log(new Date(n));
-        console.log( y > x);
-        */
-    const a = new Date(date);
-    const m = a.setDate(a.getDate() + days);
-    return m;
-  }
-
-  subtractDates(dateOne, dateTwo) {
-    const fecha1 = new Date(dateOne);
-    const fecha2 = new Date(dateTwo);
-
-    const resta = fecha1.getTime() - fecha2.getTime();
-    const res = Math.round(resta / (1000 * 60 * 60 * 24));
-    return res;
+  async findAllPayments() {
+    return this.paymentOrderModel
+      .find({
+        $or: [
+          { status: 'PAYMENT' },
+          { status: 'CANCELED' },
+          { status: 'REVERTED' },
+          { status: 'DECLINE' },
+        ],
+      })
+      .populate([
+        {
+          path: 'Customer',
+        },
+        {
+          path: 'Money',
+        },
+      ])
+      .sort({ codigo: 1 })
+      .exec();
   }
 
   generateCodePayment() {
