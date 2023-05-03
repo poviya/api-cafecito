@@ -30,8 +30,7 @@ export class PaymentOrderController {
   }
 
   @Post('create-course')
-  async createCourse(@Body() dataDto: any, @CurrentUser() user: any) {
-    dataDto.User = await user;
+  async createCourse(@Body() dataDto: any) {
     const res = await this.paymentOrderService.createCourse(dataDto);
     return res;
   }

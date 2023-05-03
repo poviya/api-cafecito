@@ -86,7 +86,8 @@ export class PaymentOrderService {
 
   async createCourse(dataDto: any): Promise<any> {
     try {
-      const resCourse = await this.courseService.findById(dataDto.Post);
+      console.log(dataDto);
+      const resCourse = await this.courseService.findById(dataDto.Course);
       const data = {
         codeCollection: `CE${this.generateCodePayment()}`,
         amount: resCourse.price,
@@ -100,7 +101,7 @@ export class PaymentOrderService {
         paymentMethod: 'CARD',
         paymentType: 'SALE_COURSE',
         paymentDetails: {
-          Post: resCourse,
+          Course: resCourse,
         },
       };
 
@@ -227,11 +228,19 @@ export class PaymentOrderService {
       .populate('Money')
       .populate('Customer')
       .exec();
-    // send telegram
-    this.telegramBotService.newSaleProduct(res.paymentDetails['Post'], res);
-    // send email
-    const product = `Compra de ${res.paymentDetails['Post']['title']}`;
-    await this.sendConfirmEmail(res, product);
+    if (res.paymentType == 'SALE_PRODUCT') {
+      // send telegram
+      this.telegramBotService.newSaleProduct(res.paymentDetails['Post'], res);
+      // send email
+      const product = `Compra de ${res.paymentDetails['Post']['title']}`;
+      await this.sendConfirmEmail(res, product);
+    } else if (res.paymentType == 'SALE_COURSE') {
+      // send telegram
+      this.telegramBotService.newSaleCourse(res.paymentDetails['Course'], res);
+      // send email
+      const product = `Pago de ${res.paymentDetails['Course']['title']}`;
+      await this.sendConfirmEmail(res, product);
+    }
     return res;
   }
 

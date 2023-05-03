@@ -5,6 +5,8 @@ import { map } from 'rxjs';
 import { Posts } from 'src/modules/posts/post/entities/post.entity';
 import { PaymentOrder } from 'src/modules/transactions/payment-order/entities/payment-order.entity';
 import { PostService } from 'src/modules/posts/post/post.service';
+import { Course } from 'src/modules/courses/course/entities/course.entity';
+import { CourseService } from 'src/modules/courses/course/course.service';
 
 @Injectable()
 export class TelegramBotService {
@@ -12,7 +14,8 @@ export class TelegramBotService {
 
   constructor(
     private readonly httpService: HttpService,
-    public postService: PostService,
+    private readonly postService: PostService,
+    private readonly courseService: CourseService,
   ) {
     this.bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
@@ -96,61 +99,19 @@ export class TelegramBotService {
     });
     //this.bot.telegram.sendMessage(chatId, text);
   }
-  async send() {
-    //const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
-    //const chatId = '1611792260';
+
+  async newSaleCourse(course: Course, paymentOrder: PaymentOrder) {
+    const resPost = await this.courseService.findById(course._id);
+    console.log('postMedia', resPost);
     const chatId = process.env.TELEGRAM_CHAT_ID;
-    const filePath = 'https://onlypu.com/assets/logo/logo.png';
-    const link = `https://onlypu.com/pu/hermosa-estranjera-abigail--note-quedes-solito-y-aburrido-ven-y-disfruta-de-un-excelente-servicio-sin-prisassin-intermediarios-boPab2as1ckj`;
-    const text = `💜💜💜🤍Hola  buenas Noches
-
-
-
-    `;
-    /*bot.telegram.sendMessage(
-      '1611792260',
-      ` + filePath, 
-    );*/
-    //bot.telegram.sendPhoto(chatId, filePath, { caption: text + link });
-    //bot.telegram.sendLocation(chatId, 40.6892494, -74.0466891);
-    this.bot.telegram.sendMessage(chatId, text + `+59167020452`, {
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: 'WhatsApp',
-              url: 'https://api.whatsapp.com/send/?phone=%2B59162118070&text=Hola%2C+acabo+de+ver+tu+anuncio+en+Onlypu.com%2C+%EF%BF%BDHermosa+estranjera+Abig%28...%29%2C++quiero+hacertelo+rico.+https%3A%2F%2Fonlypu.com%2Fpu%2Fhermosa-estranjera-abigail--note-quedes-solito-y-aburrido-ven-y-disfruta-de-un-excelente-servicio-sin-prisassin-intermediarios-boPab2as1ckj&type=phone_number&app_absent=0',
-            },
-            {
-              text: 'Telegram',
-              url: 'https://t.me/poviyacom',
-            },
-          ],
-        ],
-      },
+    const text = `Gracias por su compra ${paymentOrder.Customer.name} ${paymentOrder.Customer.lastname}`;
+    //const filePath = 'https://onlypu.com/assets/logo/logo.png';
+    const filePath = `${resPost.PostMedia[0].url}`;
+    //const link = `https://celccar.com`;
+    const link = `https://celccar.com/course/${course.slug}`;
+    this.bot.telegram.sendPhoto(chatId, filePath, {
+      caption: text + ' ' + link,
     });
-
-    /*bot.telegram.sendMessage(
-      chatId,
-      text + `<a href='https://www.google.com/'>Google</a`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: 'WhatsApp',
-                url: 'https://api.whatsapp.com/send/?phone=%2B59162118070&text=Hola%2C+acabo+de+ver+tu+anuncio+en+Onlypu.com%2C+%EF%BF%BDHermosa+estranjera+Abig%28...%29%2C++quiero+hacertelo+rico.+https%3A%2F%2Fonlypu.com%2Fpu%2Fhermosa-estranjera-abigail--note-quedes-solito-y-aburrido-ven-y-disfruta-de-un-excelente-servicio-sin-prisassin-intermediarios-boPab2as1ckj&type=phone_number&app_absent=0',
-              },
-              {
-                text: 'Phone',
-                url: `<a href='https://www.google.com/'>Google</a>`,
-              },
-            ],
-          ],
-        },
-      },
-    );*/
+    //this.bot.telegram.sendMessage(chatId, text);
   }
 }
