@@ -133,7 +133,14 @@ export class CourseService {
     await this.findById(ID);
 
     try {
-      const res = await this.courseModel.findOneAndUpdate(dataDto);
+      const res = await this.courseModel.findOneAndUpdate(
+        {
+          _id: ID,
+        },
+        {
+          ...dataDto,
+        },
+      );
       return res;
     } catch (error) {
       this.handleDBExceptions(error);

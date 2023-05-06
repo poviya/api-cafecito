@@ -146,9 +146,16 @@ export class PostService {
 
   async update(ID: string, dataDto: any): Promise<any> {
     await this.findById(ID);
-
+    console.log(dataDto);
     try {
-      const res = await this.postModel.findOneAndUpdate(dataDto);
+      const res = await this.postModel.findOneAndUpdate(
+        {
+          _id: ID,
+        },
+        {
+          ...dataDto,
+        },
+      );
       return res;
     } catch (error) {
       this.handleDBExceptions(error);
@@ -166,6 +173,7 @@ export class PostService {
         .populate('Money')
         .populate('User');
     }
+    console.log(res);
     if (!res) throw new NotFoundException(`Id, "${ID}" not found`);
     return res;
   }
