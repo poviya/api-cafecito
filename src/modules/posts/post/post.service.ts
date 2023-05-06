@@ -48,27 +48,43 @@ export class PostService {
       console.log(dataDto);
       const code = 'CO' + this.generateRandomString(10); //+ Date.now();
       const slug = (await this.convertToSlug(dataDto.title)) + code;
-      const createPost = {
-        title: dataDto.title,
-        code: code,
-        slug: slug,
-        User: user._id,
-        description: dataDto.description,
-        PostSalesUnit: dataDto.PostSalesUnit,
-        PostCategory: dataDto.PostCategory,
-        price: dataDto.price,
-        Money: dataDto.Money,
-        tags: splitHastag(dataDto.description),
-        type: 'ARTICLE',
-        weight: dataDto.weight,
-        weightAmount: dataDto.weightAmount,
-        comment: dataDto.comment,
-      };
+      let createPost = {};
+      if (dataDto.type == 'ARTICLE') {
+        createPost = {
+          title: dataDto.title,
+          code: code,
+          slug: slug,
+          User: user._id,
+          description: dataDto.description,
+          PostSalesUnit: dataDto.PostSalesUnit,
+          PostCategory: dataDto.PostCategory,
+          price: dataDto.price,
+          Money: dataDto.Money,
+          tags: splitHastag(dataDto.description),
+          type: dataDto.type,
+          weight: dataDto.weight,
+          weightAmount: dataDto.weightAmount,
+          comment: dataDto.comment,
+        };
+      } else if (dataDto.type == 'BLOG') {
+        createPost = {
+          title: dataDto.title,
+          code: code,
+          slug: slug,
+          User: user._id,
+          description: dataDto.description,
+          tags: splitHastag(dataDto.description),
+          type: dataDto.type,
+          eventDate: dataDto.eventDate,
+          comment: dataDto.comment,
+        };
+      }
+
       const res = await this.postModel.create(createPost);
       const createPostMedia: any = {
         User: user._id,
         Post: res._id,
-        category: 'ARTICLE',
+        category: dataDto.type,
       };
       //await this.amazonStorageService.uploadFileBase64(dataDto.imageBase64);
       for (const file of files) {
@@ -143,7 +159,7 @@ export class PostService {
     let res: any;
     if (isValidObjectId(ID)) {
       res = await this.postModel
-        .findOne({ _id: ID, type: 'ARTICLE' })
+        .findOne({ _id: ID })
         .populate('PostCategory')
         .populate('PostSalesUnit')
         .populate('PostMedia')
@@ -194,6 +210,7 @@ export class PostService {
     let resPostCategoy: any;
     const data: any = {
       status: { $eq: dataDto.status },
+      type: dataDto.type,
     };
 
     if (dataDto.slugPostCategory) {
@@ -210,9 +227,9 @@ export class PostService {
       }
     }
     const [resTotal, resPost] = await Promise.all([
-      this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
+      this.postModel.countDocuments({ ...data }),
       this.postModel
-        .find({ ...data, type: 'ARTICLE' })
+        .find({ ...data })
         .populate('PostMedia')
         .populate('PostCategory')
         .populate('PostSalesUnit')
@@ -234,6 +251,7 @@ export class PostService {
 
     const data: any = {
       status: { $eq: dataDto.status },
+      type: dataDto.type,
     };
 
     if (dataDto.search) {
@@ -244,7 +262,7 @@ export class PostService {
     }
 
     const res = await this.postModel
-      .find({ ...data, type: 'ARTICLE' })
+      .find({ ...data })
       .populate('PostMedia')
       .populate('PostCategory')
       .populate('PostSalesUnit')
@@ -288,6 +306,7 @@ export class PostService {
     const data: any = {
       User: user._id,
       status: { $eq: dataDto.status },
+      type: { $eq: dataDto.type },
     };
 
     if (dataDto.search) {
@@ -297,10 +316,11 @@ export class PostService {
       }
     }
 
+    console.log(data);
     const [resTotal, resPost] = await Promise.all([
-      this.postModel.countDocuments({ ...data, type: 'ARTICLE' }),
+      this.postModel.countDocuments({ ...data }),
       this.postModel
-        .find({ ...data, type: 'ARTICLE' })
+        .find({ ...data })
         .populate('PostMedia')
         .populate('PostCategory')
         .populate('PostSalesUnit')
@@ -336,7 +356,7 @@ export class PostService {
     }
 
     const res = await this.postModel
-      .find({ ...data, type: 'ARTICLE' })
+      .find({ ...data })
       .populate('PostMedia')
       .populate('PostCategory')
       .populate('PostSalesUnit')
@@ -356,12 +376,12 @@ export class PostService {
       this.postModel.countDocuments({
         User: user._id,
         status: 'ACTIVE',
-        type: 'ARTICLE',
+        type: dataDto.type,
       }),
       this.postModel.countDocuments({
         User: user._id,
         status: 'SUSPENDED',
-        type: 'ARTICLE',
+        type: dataDto.type,
       }),
     ]);
 

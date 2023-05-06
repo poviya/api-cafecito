@@ -13,6 +13,11 @@ export enum TypeStatus {
   EXPIRED = 'EXPIRED',
 }
 
+export enum Type {
+  ARTICLE = 'ARTICLE',
+  BLOG = 'BLOG',
+}
+
 export class FindAllDto {
   @IsEnum(TypeStatus)
   status: TypeStatus;
@@ -28,6 +33,10 @@ export class FindAllDto {
   @IsMongoId()
   @IsOptional()
   PostCategory: string;
+
+  @IsEnum(Type)
+  @IsOptional()
+  type: Type;
 }
 
 export class FindAllUserDto {
@@ -37,6 +46,10 @@ export class FindAllUserDto {
   @IsString()
   @IsOptional()
   search: string;
+
+  @IsEnum(Type)
+  @IsOptional()
+  type: Type;
 }
 
 export class FindAllUserMediaDto {
@@ -74,23 +87,32 @@ export class UpdatePostDto {
   description: string;
 
   @IsMongoId()
+  @IsOptional()
   PostSalesUnit: string;
 
   @IsMongoId()
+  @IsOptional()
   PostCategory: string;
 
   @IsNumber()
+  @IsOptional()
   price: number;
 
   @IsEnum(TypeWeight)
+  @IsOptional()
   weight: TypeWeight;
 
   @IsNumber()
+  @IsOptional()
   weightAmount: number;
 
   @IsBoolean()
   @IsOptional()
   comment: boolean;
+
+  @IsString()
+  @IsOptional()
+  eventDate: string;
 }
 
 export class UpdateStatusDto {

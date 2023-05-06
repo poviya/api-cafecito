@@ -37,7 +37,7 @@ export class Posts {
   @Prop({
     required: true,
     default: 'ARTICLE',
-    enum: ['ARTICLE'],
+    enum: ['ARTICLE', 'BLOG'],
   })
   type?: string;
 
@@ -69,6 +69,8 @@ export class Posts {
 
   @Prop({ required: true, default: 0 }) priceBuy?: number;
   @Prop({ required: true, default: 0 }) priceSale?: number;
+
+  @Prop() eventDate?: string;
 
   @Prop({ required: true, default: true }) comment?: boolean;
   @Prop({ required: true, default: 0 }) likes?: number;
