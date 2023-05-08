@@ -80,7 +80,7 @@ export class PaymentOrderService {
         return false;
       }
     } catch (error) {
-      //this.handleDBExceptions(error);
+      this.handleDBExceptions(error);
     }
   }
 
